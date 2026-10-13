@@ -1,0 +1,195 @@
+{
+  "name": "gizmo",
+  "displayName": "Gizmo by Celestial Works",
+  "description": "Gizmo checks what you built with AI, sums it up in plain words, and helps you share it with your team.",
+  "version": "1.0.2",
+  "publisher": "celestialworks",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#2f3a26",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "ai",
+    "claude",
+    "product",
+    "product management",
+    "design",
+    "designer",
+    "code review",
+    "ux",
+    "release readiness"
+  ],
+  "author": "Pauline Shay (Celestial Works)",
+  "homepage": "https://hipauline.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hipauline-shay/gizmo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hipauline-shay/gizmo/issues"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Gizmo reads project files and sends selected code to Anthropic with your API key, so it only runs in workspaces you trust."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Gizmo needs project files on disk."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "gizmo.askProduct",
+        "title": "Gizmo: Ask About This Product"
+      },
+      {
+        "command": "gizmo.scanProduct",
+        "title": "Gizmo: Scan Whole Product"
+      },
+      {
+        "command": "gizmo.refreshProjectMap",
+        "title": "Gizmo: Refresh Project Map"
+      },
+      {
+        "command": "gizmo.explainAsProduct",
+        "title": "Gizmo: Explain as Product"
+      },
+      {
+        "command": "gizmo.openPanel",
+        "title": "Gizmo: Open Panel"
+      },
+      {
+        "command": "gizmo.askAboutSelection",
+        "title": "Gizmo: Ask About Selection"
+      },
+      {
+        "command": "gizmo.exportBrief",
+        "title": "Gizmo: Export Product Brief"
+      },
+      {
+        "command": "gizmo.configureProvider",
+        "title": "Gizmo: Configure AI Provider"
+      },
+      {
+        "command": "gizmo.clearAnalysis",
+        "title": "Gizmo: Clear Current Analysis"
+      },
+      {
+        "command": "gizmo.analyzeFlow",
+        "title": "Gizmo: Analyze a User Flow"
+      },
+      {
+        "command": "gizmo.compareSpec",
+        "title": "Gizmo: Compare to Spec"
+      },
+      {
+        "command": "gizmo.exportTickets",
+        "title": "Gizmo: Export Jira-Ready Tickets"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "gizmo.explainAsProduct",
+          "group": "z_gizmo@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Gizmo",
+      "properties": {
+        "gizmo.model": {
+          "type": "string",
+          "default": "claude-opus-5-5",
+          "description": "Claude model used for analysis."
+        },
+        "gizmo.maxFiles": {
+          "type": "number",
+          "default": 12,
+          "minimum": 1,
+          "maximum": 40,
+          "description": "Maximum number of files included in a single analysis."
+        },
+        "gizmo.maxContextSize": {
+          "type": "number",
+          "default": 160000,
+          "minimum": 10000,
+          "description": "Maximum total characters of source code sent to the AI provider."
+        },
+        "gizmo.includeRelatedImports": {
+          "type": "boolean",
+          "default": true,
+          "description": "Also include local files imported by the selected file."
+        },
+        "gizmo.importDepth": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 3,
+          "description": "How many levels of local imports to follow."
+        },
+        "gizmo.autoScope": {
+          "type": "boolean",
+          "default": false,
+          "description": "Analyze automatically with the proposed file scope, without showing the review step."
+        },
+        "gizmo.showPrivacyDisclosure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the privacy disclosure before the first analysis."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "npm run build:extension && npm run build:webview",
+    "build:extension": "node esbuild.mjs",
+    "build:webview": "vite build webview",
+    "watch:extension": "node esbuild.mjs --watch",
+    "type-check": "tsc --noEmit -p ./tsconfig.json && tsc --noEmit -p ./webview/tsconfig.json",
+    "lint": "eslint src webview/src tests",
+    "format": "prettier --write \"src/**/*.ts\" \"webview/src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\"",
+    "test": "vitest run",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.115.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@types/vscode": "1.104.0",
+    "@vitejs/plugin-react": "6.0.4",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "0.28.1",
+    "eslint": "9.39.5",
+    "prettier": "3.9.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.65.0",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  },
+  "allowScripts": {
+    "@vscode/vsce-sign@2.0.9": true,
+    "esbuild@0.28.1": true,
+    "keytar@7.9.0": true
+  }
+}

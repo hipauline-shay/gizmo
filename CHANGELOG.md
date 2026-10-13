@@ -1,0 +1,28 @@
+# Changelog
+
+## 1.0.2 — 2026-10-12
+
+- **Read it to me** now uses Gizmo's British voice from the very first click. Before, the first read could fall back to your computer's default voice, because the voice list loads a moment after the panel opens.
+
+## 1.0.1 — 2026-10-12
+
+- **Read it to me** on every Gizmo answer and reply draft, not just his card. Gizmo now speaks with a British voice.
+- **Help me answer my boss** asks who's asking. A boss or client gets a short, plain answer with no code talk; a CTO or engineer gets the technical details. You get only the reply, ready to send.
+- Ask Gizmo answers are shorter and in plain words, with the answer first.
+- **Open in email** now includes the whole update (it used to stop at an "&").
+- The Check and Summary tabs each keep their own scroll position.
+- The Gizmo panel keeps its size and place when you ask a question.
+- For big questions, the best-matching group of files is listed first.
+
+## 1.0.0 — 2026-10-07
+
+First public release of Gizmo by Celestial Works.
+
+- Gizmo, a block dragon, sits at the top of the panel and tells you in one line what he found. His pose changes as he reads, when something is blocking, and when you're clear.
+- **Check** tab: a verdict, Open items you can check off, defer, or dismiss, UX states, what's working, and a requirements check.
+- **Summary** tab: "Can we ship?", what's blocking release, recommended priorities, and a ready-to-paste team update.
+- **Share**: one button copies the update as plain text, or opens it in email.
+- **Ask Gizmo**: plain-language answers about what you built, with Copy and Open in email. "Help me answer my boss" drafts a reply from what's actually built.
+- **Read it to me**: Gizmo reads his notes aloud.
+- Runs on your own Anthropic API key with Claude Opus 5.5, and shows the estimated cost after every run.
+- Privacy: `.env` and key files are never sent, key-looking strings inside code are masked before sending, and the panel shows how many were masked.

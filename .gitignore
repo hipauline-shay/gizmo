@@ -1,0 +1,18 @@
+node_modules/
+dist/
+out/
+media/webview/
+*.vsix
+.DS_Store
+
+# Private: stays on this Mac only, never pushed to GitHub
+CLAUDE.md
+.claude/
+tasks/
+docs/*
+!docs/developing.md
+design/*
+!design/screenshots/
+design_handoff_gizmo_panel/
+preview-harness.html
+.env*

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 — 2026-10-13
+
+- Big scans no longer fail with "The AI response could not be understood" because of one small slip in Claude's answer. Gizmo now repairs small format slips and skips a single malformed item instead of discarding the whole analysis.
+- The store page now shows screenshots, and links to the source code, issues, and the author's portfolio.
+
 ## 1.0.2 — 2026-10-12
 
 - **Read it to me** now uses Gizmo's British voice from the very first click. Before, the first read could fall back to your computer's default voice, because the voice list loads a moment after the panel opens.

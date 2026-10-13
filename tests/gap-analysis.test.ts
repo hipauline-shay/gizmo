@@ -40,15 +40,19 @@ describe('parseGapAnalysisResponse', () => {
     expect(result.summary).toContain('error handling')
   })
 
-  it('rejects invalid status values', () => {
-    expect(() =>
-      parseGapAnalysisResponse(
-        JSON.stringify({
-          summary: 'x',
-          items: [{ requirement: 'r', status: 'maybe', explanation: 'e' }],
-        }),
-      ),
-    ).toThrow(GizmoError)
+  it('drops a requirement with an unknown status but keeps the rest', () => {
+    const result = parseGapAnalysisResponse(
+      JSON.stringify({
+        summary: 'x',
+        items: [
+          { requirement: 'r', status: 'maybe', explanation: 'e' },
+          { requirement: 'upload', status: 'Built', explanation: 'done' },
+        ],
+      }),
+    )
+    expect(result.items).toEqual([
+      { requirement: 'upload', status: 'built', explanation: 'done', evidence: [] },
+    ])
   })
 
   it('rejects non-JSON responses', () => {

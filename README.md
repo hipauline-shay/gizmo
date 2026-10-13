@@ -4,6 +4,12 @@
 
 If you build with AI coding tools and also carry the designer, PM, or founder hat, you know the feeling: the code exists, but is it actually done? What's missing? What do I tell the team? Gizmo answers those three questions inside VS Code or Cursor, without you reading the code.
 
+<p align="center">
+  <img src="design/screenshots/3-welcome.jpg" width="260" alt="Gizmo's welcome screen: a sleeping block dragon asks which screen or feature to look at">
+  <img src="design/screenshots/1-check-tab.jpg" width="260" alt="The Check tab: Gizmo's one-line verdict, what blocks launch, and open items linked to the code">
+  <img src="design/screenshots/2-summary-share.jpg" width="260" alt="The Summary tab: can we ship, priorities, and a ready-to-paste team update">
+</p>
+
 ## What Gizmo does
 
 Gizmo is a friendly block dragon who reads the screen or feature you point him at and tells you, in one line, where you stand. Then he gives you the details only if you want them.

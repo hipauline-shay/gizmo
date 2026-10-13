@@ -66,6 +66,51 @@ describe('parseAnalysisResponse', () => {
     expect(analysis.states).toEqual([])
   })
 
+  it('repairs small slips instead of failing the whole scan', () => {
+    const messy = JSON.stringify({
+      featureName: 'Camera capture',
+      summary: 'Snap to identify.',
+      confidence: 'High',
+      completionStatus: 'nearly done',
+      risks: null,
+      states: [
+        { name: 'Loading', status: 'Implemented', description: null, evidence: null },
+        { status: 'missing' },
+      ],
+      launchBlockersTypo: [],
+      nextSteps: [{ title: 'Reset share choice', userImpact: 'critical', required: 'yes' }],
+      perspectives: {
+        stakeholder: {
+          launchBlockers: [
+            {
+              text: 'Privacy bug',
+              confidence: 'Confirmed',
+              evidence: [
+                { file: 'camera-screen.tsx', startLine: '173', endLine: 190 },
+                { file: 'camera-screen.tsx', startLine: 0, endLine: 'n/a' },
+              ],
+            },
+            'not an object',
+          ],
+        },
+        pm: null,
+      },
+    })
+    const analysis = parseAnalysisResponse(messy)
+    expect(analysis.confidence).toBe('high')
+    expect(analysis.completionStatus).toBe('in-progress')
+    expect(analysis.risks).toEqual([])
+    expect(analysis.states).toEqual([
+      { name: 'Loading', status: 'implemented', description: '', evidence: [] },
+    ])
+    expect(analysis.nextSteps[0]).toMatchObject({ userImpact: 'medium', required: false })
+    const [blocker] = analysis.perspectives.stakeholder.launchBlockers
+    expect(analysis.perspectives.stakeholder.launchBlockers).toHaveLength(1)
+    expect(blocker?.confidence).toBe('confirmed')
+    expect(blocker?.evidence).toEqual([{ file: 'camera-screen.tsx', startLine: 173, endLine: 190 }])
+    expect(analysis.perspectives.pm.mvpMustFix).toEqual([])
+  })
+
   it('rejects non-JSON responses', () => {
     expect(() => parseAnalysisResponse('I cannot analyze this.')).toThrow(GizmoError)
   })

@@ -1,42 +1,47 @@
 import { z } from 'zod'
 
+// The model's answer has hundreds of fields. One slip (a "173" instead of 173, "Confirmed"
+// instead of "confirmed", a null list) must not throw away the whole scan, so every field is
+// repaired or defaulted, and a malformed list item is dropped instead of failing the analysis.
+// Only featureName and summary are strictly required.
+
 export const evidenceSchema = z.object({
   file: z.string(),
-  startLine: z.number().int().min(1),
-  endLine: z.number().int().min(1),
+  startLine: z.coerce.number().int().min(1),
+  endLine: z.coerce.number().int().min(1),
 })
 
-export const confidenceSchema = z.enum(['confirmed', 'likely', 'unclear', 'team'])
+export const confidenceSchema = lenientEnum(['confirmed', 'likely', 'unclear', 'team'], 'unclear')
 
-const evidenceList = z.array(evidenceSchema).default([])
+const evidenceList = lenientList(evidenceSchema)
 
 export const primaryActionSchema = z.object({
   label: z.string(),
-  behavior: z.string(),
+  behavior: lenientText(),
   evidence: evidenceList,
 })
 
 export const userFlowStepSchema = z.object({
-  step: z.number().int(),
+  step: z.coerce.number().int().catch(0),
   title: z.string(),
-  description: z.string(),
-  confidence: confidenceSchema.default('unclear'),
+  description: lenientText(),
+  confidence: confidenceSchema,
 })
 
 export const uxStateSchema = z.object({
   name: z.string(),
-  status: z.enum(['implemented', 'partial', 'missing', 'unclear']),
-  description: z.string(),
+  status: lenientEnum(['implemented', 'partial', 'missing', 'unclear'], 'unclear'),
+  description: lenientText(),
   evidence: evidenceList,
 })
 
 export const findingSchema = z.object({
   text: z.string(),
-  confidence: confidenceSchema.default('unclear'),
+  confidence: confidenceSchema,
   evidence: evidenceList,
 })
 
-const findingList = z.array(findingSchema).default([])
+const findingList = lenientList(findingSchema)
 
 export const designerPerspectiveSchema = z.object({
   painPoints: findingList,
@@ -44,80 +49,112 @@ export const designerPerspectiveSchema = z.object({
 })
 
 export const pmPerspectiveSchema = z.object({
-  valueProposition: z.string().default(''),
+  valueProposition: lenientText(),
   sellingPoints: findingList,
   mvpMustFix: findingList,
   analytics: findingList,
 })
 
 export const stakeholderPerspectiveSchema = z.object({
-  launchSummary: z.string().default(''),
-  launchGoal: z.string().default(''),
+  launchSummary: lenientText(),
+  launchGoal: lenientText(),
   launchBlockers: findingList,
 })
 
-const emptyDesigner = { painPoints: [], designSystem: [] }
-const emptyPm = { valueProposition: '', sellingPoints: [], mvpMustFix: [], analytics: [] }
-const emptyStakeholder = { launchSummary: '', launchGoal: '', launchBlockers: [] }
-
-export const perspectivesSchema = z
-  .object({
-    designer: designerPerspectiveSchema.default(emptyDesigner),
-    pm: pmPerspectiveSchema.default(emptyPm),
-    stakeholder: stakeholderPerspectiveSchema.default(emptyStakeholder),
-  })
-  .default({ designer: emptyDesigner, pm: emptyPm, stakeholder: emptyStakeholder })
+export const perspectivesSchema = z.object({
+  designer: lenientObject(designerPerspectiveSchema),
+  pm: lenientObject(pmPerspectiveSchema),
+  stakeholder: lenientObject(stakeholderPerspectiveSchema),
+})
 
 export const nextStepSchema = z.object({
   title: z.string(),
-  detail: z.string().default(''),
-  userImpact: z.enum(['high', 'medium', 'low']).default('medium'),
-  effort: z.enum(['low', 'medium', 'high']).default('medium'),
-  required: z.boolean().default(false),
+  detail: lenientText(),
+  userImpact: lenientEnum(['high', 'medium', 'low'], 'medium'),
+  effort: lenientEnum(['low', 'medium', 'high'], 'medium'),
+  required: z.boolean().catch(false),
   evidence: evidenceList,
 })
 
 export const productAnalysisSchema = z.object({
   featureName: z.string(),
   summary: z.string(),
-  confidence: z.enum(['high', 'medium', 'low']),
-  completionStatus: z
-    .enum(['complete', 'mostly-complete', 'in-progress', 'not-started'])
-    .default('in-progress'),
-  riskLevel: z.enum(['low', 'medium', 'high']).default('medium'),
-  whatsWorking: z.array(findingSchema).default([]),
-  evidenceSummary: z.string().default(''),
-  userGoal: z.string().default(''),
-  primaryActions: z.array(primaryActionSchema).default([]),
-  userFlow: z.array(userFlowStepSchema).default([]),
-  states: z.array(uxStateSchema).default([]),
-  businessRules: z.array(findingSchema).default([]),
-  permissions: z.array(findingSchema).default([]),
-  dataDependencies: z.array(findingSchema).default([]),
-  externalServices: z.array(findingSchema).default([]),
-  components: z.array(findingSchema).default([]),
-  risks: z.array(findingSchema).default([]),
-  uxConcerns: z.array(findingSchema).default([]),
-  missingStates: z.array(findingSchema).default([]),
-  openQuestions: z.array(findingSchema).default([]),
-  acceptanceCriteria: z.array(findingSchema).default([]),
-  changeImpact: z.array(findingSchema).default([]),
-  technicalNotes: z.array(findingSchema).default([]),
-  nextSteps: z.array(nextStepSchema).default([]),
-  perspectives: perspectivesSchema,
+  confidence: lenientEnum(['high', 'medium', 'low'], 'medium'),
+  completionStatus: lenientEnum(
+    ['complete', 'mostly-complete', 'in-progress', 'not-started'],
+    'in-progress',
+  ),
+  riskLevel: lenientEnum(['low', 'medium', 'high'], 'medium'),
+  whatsWorking: findingList,
+  evidenceSummary: lenientText(),
+  userGoal: lenientText(),
+  primaryActions: lenientList(primaryActionSchema),
+  userFlow: lenientList(userFlowStepSchema),
+  states: lenientList(uxStateSchema),
+  businessRules: findingList,
+  permissions: findingList,
+  dataDependencies: findingList,
+  externalServices: findingList,
+  components: findingList,
+  risks: findingList,
+  uxConcerns: findingList,
+  missingStates: findingList,
+  openQuestions: findingList,
+  acceptanceCriteria: findingList,
+  changeImpact: findingList,
+  technicalNotes: findingList,
+  nextSteps: lenientList(nextStepSchema),
+  perspectives: lenientObject(perspectivesSchema),
 })
 
 export const gapItemSchema = z.object({
   requirement: z.string(),
-  status: z.enum(['built', 'partial', 'missing', 'not-specified']),
-  explanation: z.string(),
+  // No safe fallback: guessing "partial" would mislabel a requirement, so an unknown status
+  // drops that one item instead.
+  status: z.preprocess(
+    (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+    z.enum(['built', 'partial', 'missing', 'not-specified']),
+  ),
+  explanation: lenientText(),
   evidence: evidenceList,
 })
 
 export const gapAnalysisSchema = z.object({
   summary: z.string(),
-  items: z.array(gapItemSchema).default([]),
+  items: lenientList(gapItemSchema),
 })
+
+function lenientEnum<const Values extends readonly [string, ...string[]]>(
+  values: Values,
+  fallback: Values[number],
+) {
+  return z
+    .preprocess(
+      (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+      z.enum(values),
+    )
+    .catch(fallback)
+}
+
+function lenientText() {
+  return z.preprocess((value) => value ?? undefined, z.string().default('')).catch('')
+}
+
+function lenientList<Item extends z.ZodType>(item: Item) {
+  return z
+    .array(z.unknown())
+    .catch([])
+    .transform((values) =>
+      values.flatMap((value): z.output<Item>[] => {
+        const parsed = item.safeParse(value)
+        return parsed.success ? [parsed.data] : []
+      }),
+    )
+}
+
+function lenientObject<Shape extends z.ZodObject>(schema: Shape) {
+  return z.preprocess((value) => (typeof value === 'object' && value !== null ? value : {}), schema)
+}
 
 export type NextStep = z.infer<typeof nextStepSchema>
 export type Perspectives = z.infer<typeof perspectivesSchema>

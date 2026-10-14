@@ -2043,11 +2043,6 @@ textarea:focus-visible {
   max-width: none;
 }
 
-.suggestion-recent {
-  border-color: var(--pt-accent);
-  color: var(--pt-accent);
-}
-
 .area-picker-cost {
   margin: 0;
   font-size: 12px;

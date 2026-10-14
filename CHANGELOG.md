@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.9 — 2026-10-14
+
+- "What I changed this week" now looks like the other suggestions instead of being highlighted.
+
 ## 1.0.8 — 2026-10-14
 
 - "What I changed this week" disappears once your report already has it, and Rescan on that tab picks the week's newest files again.

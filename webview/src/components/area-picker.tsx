@@ -61,7 +61,7 @@ export const AreaPicker = ({ target, suggestions = [], canScanRecent = true }: A
         {canScanRecent && (
           <button
             type="button"
-            className="suggestion suggestion-recent"
+            className="suggestion"
             disabled={isSending}
             onClick={() => send({ type: 'scanRecent', target })}
           >

@@ -6,7 +6,6 @@ export interface Settings {
   limits: ContextLimits
   includeRelatedImports: boolean
   showPrivacyDisclosure: boolean
-  autoScope: boolean
 }
 
 export function readSettings(): Settings {
@@ -21,6 +20,5 @@ export function readSettings(): Settings {
     },
     includeRelatedImports: config.get<boolean>('includeRelatedImports', true),
     showPrivacyDisclosure: config.get<boolean>('showPrivacyDisclosure', true),
-    autoScope: config.get<boolean>('autoScope', false),
   }
 }

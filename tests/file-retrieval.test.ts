@@ -93,46 +93,6 @@ describe('findRelevantFiles', () => {
     for (const file of result.possible) expect(file.tier).toBe('possible')
   })
 
-  it('groups matches into feature-area sections', () => {
-    const result = findRelevantFiles(cameraMap, 'capture upload settings screen')
-    expect(result.sections.length).toBeGreaterThan(0)
-    const names = result.sections.map((section) => section.name)
-    expect(names).toContain('capture')
-  })
-
-  it('lists the best-matching section first, not the biggest one', () => {
-    const map: ProjectMap = {
-      rootPath: '/project',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      files: [
-        entry({
-          relativePath: 'screens/camera/camera-screen.tsx',
-          kind: 'screen',
-          featureArea: 'camera',
-          components: ['CameraScreen'],
-        }),
-        entry({
-          relativePath: 'screens/camera/camera-shutter.tsx',
-          kind: 'component',
-          featureArea: 'camera',
-          components: ['CameraShutter'],
-        }),
-        ...['a', 'b', 'c'].map((name) =>
-          entry({
-            relativePath: `screens/settings/${name}.tsx`,
-            kind: 'screen',
-            featureArea: 'settings',
-            localImports: ['screens/camera/camera-screen.tsx'],
-          }),
-        ),
-      ],
-    }
-    const result = findRelevantFiles(map, 'camera')
-    const settings = result.sections.find((section) => section.name === 'settings')
-    expect(settings?.count).toBe(3)
-    expect(result.sections[0]?.name).toBe('camera')
-  })
-
   it('returns nothing useful for unrelated queries', () => {
     const result = findRelevantFiles(cameraMap, 'billing subscription paywall')
     expect(result.strong).toHaveLength(0)

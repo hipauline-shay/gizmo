@@ -2,7 +2,7 @@
   "name": "gizmo",
   "displayName": "Gizmo by Celestial Works",
   "description": "Gizmo checks what you built with AI, sums it up in plain words, and helps you share it with your team.",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "publisher": "celestialworks",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -149,11 +149,6 @@
           "minimum": 0,
           "maximum": 3,
           "description": "How many levels of local imports to follow."
-        },
-        "gizmo.autoScope": {
-          "type": "boolean",
-          "default": false,
-          "description": "Analyze automatically with the proposed file scope, without showing the review step."
         },
         "gizmo.showPrivacyDisclosure": {
           "type": "boolean",

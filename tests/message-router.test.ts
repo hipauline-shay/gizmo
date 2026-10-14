@@ -11,8 +11,8 @@ function createHandlers(): MessageHandlers {
     onExportTickets: vi.fn(),
     onAsk: vi.fn(),
     onAskProduct: vi.fn(),
-    onConfirmScope: vi.fn(),
-    onCancelScope: vi.fn(),
+    onScanRecent: vi.fn(),
+    onResetAddArea: vi.fn(),
     onRefreshMap: vi.fn(),
     onScanProduct: vi.fn(),
     onCompareSpec: vi.fn(),
@@ -93,44 +93,40 @@ describe('routeMessage', () => {
     expect(handlers.onExportTickets).toHaveBeenCalledOnce()
   })
 
-  it('routes product questions and scope confirmations', () => {
+  it('routes product questions', () => {
     const handlers = createHandlers()
     routeMessage({ type: 'askProduct', question: ' What is the camera flow? ' }, handlers)
     expect(handlers.onAskProduct).toHaveBeenCalledWith('What is the camera flow?', 'new')
-    routeMessage({ type: 'confirmScope', files: ['a.tsx'], autoScope: true }, handlers)
-    expect(handlers.onConfirmScope).toHaveBeenCalledWith(['a.tsx'], true, 'new')
   })
 
   it('routes "+ Add area" messages to the add target', () => {
     const handlers = createHandlers()
     routeMessage({ type: 'askProduct', question: 'settings', target: 'add' }, handlers)
     expect(handlers.onAskProduct).toHaveBeenCalledWith('settings', 'add')
-    routeMessage(
-      { type: 'confirmScope', files: ['s.tsx'], autoScope: false, target: 'add' },
-      handlers,
-    )
-    expect(handlers.onConfirmScope).toHaveBeenCalledWith(['s.tsx'], false, 'add')
+    routeMessage({ type: 'scanRecent', target: 'add' }, handlers)
+    expect(handlers.onScanRecent).toHaveBeenCalledWith('add')
     routeMessage({ type: 'chooseFile', target: 'add' }, handlers)
     expect(handlers.onChooseFile).toHaveBeenCalledWith('add')
-    routeMessage({ type: 'cancelScope', target: 'add' }, handlers)
-    expect(handlers.onCancelScope).toHaveBeenCalledWith('add')
+    routeMessage({ type: 'resetAddArea' }, handlers)
+    expect(handlers.onResetAddArea).toHaveBeenCalledOnce()
     routeMessage({ type: 'refresh', areaId: 'area-1' }, handlers)
     expect(handlers.onRefresh).toHaveBeenCalledWith('area-1')
+  })
+
+  it('starts a new report from "What I changed this week" by default', () => {
+    const handlers = createHandlers()
+    routeMessage({ type: 'scanRecent' }, handlers)
+    expect(handlers.onScanRecent).toHaveBeenCalledWith('new')
   })
 
   it('rejects an unknown scan target', () => {
     const handlers = createHandlers()
     routeMessage({ type: 'askProduct', question: 'x', target: 'replace' }, handlers)
     routeMessage({ type: 'chooseFile', target: 3 }, handlers)
+    routeMessage({ type: 'scanRecent', target: 'everything' }, handlers)
     expect(handlers.onAskProduct).not.toHaveBeenCalled()
     expect(handlers.onChooseFile).not.toHaveBeenCalled()
-  })
-
-  it('rejects malformed scope payloads', () => {
-    const handlers = createHandlers()
-    routeMessage({ type: 'confirmScope', files: [1], autoScope: false }, handlers)
-    routeMessage({ type: 'confirmScope', files: [], autoScope: false }, handlers)
-    expect(handlers.onConfirmScope).not.toHaveBeenCalled()
+    expect(handlers.onScanRecent).not.toHaveBeenCalled()
   })
 
   it('routes evidence messages with valid payloads', () => {

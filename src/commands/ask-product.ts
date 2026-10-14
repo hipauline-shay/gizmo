@@ -1,22 +1,19 @@
-import fs from 'fs/promises'
 import path from 'path'
 import * as vscode from 'vscode'
-import { resolveInsideRoot } from '../utilities/paths'
 import { findRelevantFiles } from '../discovery/file-retrieval'
-import { discoveryLimits } from '../utilities/limits'
-import { knownError, type ErrorInfo } from '../utilities/errors'
+import { fitToScan } from '../analysis/fit-to-scan'
 import { readSettings } from '../services/settings-service'
-import { runAnalysis } from './explain-selection'
+import { runAnalysis, showScanError } from './explain-selection'
 import type { AppServices } from '../app-services'
-import type { ProposedFile, ScanTarget, ScopeProposal } from '../shared/messages'
+import type { ScanTarget } from '../shared/messages'
 
+// A question scans straight away: its best-matching files, up to one area's worth.
 export async function runAskProduct(
   services: AppServices,
   question?: string,
   target: ScanTarget = 'new',
 ): Promise<void> {
-  const panel = services.getPanel()
-  panel.reveal()
+  services.getPanel().reveal()
 
   const asked =
     question ??
@@ -29,21 +26,19 @@ export async function runAskProduct(
   if (!asked || asked.trim().length === 0) return
   const trimmedQuestion = asked.trim()
 
-  const showError = (error: ErrorInfo): void => {
-    if (target === 'add') panel.update({ addArea: { status: 'error', error } })
-    else panel.replaceState({ status: 'error', error, chat: [], isAsking: false })
-  }
-
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
   if (!workspaceFolder) {
-    const { code, message, action } = knownError('no-workspace')
-    showError({ code, message, action })
+    showScanError(services, target, {
+      code: 'no-workspace',
+      message: 'No folder is open in this window.',
+      action: 'Open a project folder, then ask again.',
+    })
     return
   }
 
   const map = await services.mapService.ensureMap()
   if (!map || map.files.length === 0) {
-    showError({
+    showScanError(services, target, {
       code: 'unknown',
       message: 'Gizmo could not map this project.',
       action:
@@ -53,88 +48,23 @@ export async function runAskProduct(
   }
 
   const result = findRelevantFiles(map, trimmedQuestion)
-  if (result.strong.length === 0 && result.possible.length === 0) {
-    showError({
+  const best = await fitToScan({
+    rootPath: workspaceFolder.uri.fsPath,
+    relativePaths: (result.strong.length > 0 ? result.strong : result.possible).map(
+      (file) => file.path,
+    ),
+    limits: readSettings().limits,
+  })
+  if (best.length === 0) {
+    showScanError(services, target, {
       code: 'no-selection',
       message: `No files in this project seem to match "${trimmedQuestion}".`,
       action:
-        'Try different words (e.g. the screen or feature name as it appears in the app), refresh the project map, or pick files manually.',
+        'Try the screen or feature name as it appears in the app, tap one of the suggestions, or choose files manually.',
     })
     return
   }
 
-  const rootPath = workspaceFolder.uri.fsPath
-  const proposal: ScopeProposal = {
-    question: trimmedQuestion,
-    strong: await withSizes(rootPath, result.strong),
-    possible: await withSizes(rootPath, result.possible),
-    totalMatches: result.totalMatches,
-  }
-
-  if (result.totalMatches > discoveryLimits.broadThreshold)
-    proposal.broad = { total: result.totalMatches, sections: result.sections }
-
-  const autoScope = readSettings().autoScope
-  if (autoScope && !proposal.broad && proposal.strong.length > 0) {
-    await confirmScope({
-      services,
-      question: trimmedQuestion,
-      relativePaths: proposal.strong.map((file) => file.path),
-      target,
-    })
-    return
-  }
-
-  if (target === 'add') {
-    panel.update({ addArea: { status: 'scope', scope: proposal }, question: trimmedQuestion })
-    return
-  }
-  panel.replaceState({
-    status: 'scope',
-    question: trimmedQuestion,
-    scope: proposal,
-    chat: [],
-    isAsking: false,
-  })
-}
-
-export async function confirmScope({
-  services,
-  question,
-  relativePaths,
-  rememberAutoScope,
-  target,
-}: {
-  services: AppServices
-  question: string
-  relativePaths: string[]
-  rememberAutoScope?: boolean
-  target: ScanTarget
-}): Promise<void> {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
-  if (!workspaceFolder) return
-  if (rememberAutoScope)
-    await vscode.workspace
-      .getConfiguration('gizmo')
-      .update('autoScope', true, vscode.ConfigurationTarget.Global)
-
-  const absolutePaths = relativePaths.flatMap((relativePath) => {
-    const absolute = resolveInsideRoot(workspaceFolder.uri.fsPath, relativePath)
-    return absolute ? [absolute] : []
-  })
-  if (absolutePaths.length === 0) return
-  await runAnalysis(services, absolutePaths, question, { target })
-}
-
-// File sizes let the panel show the scan's estimated cost before anything is sent.
-async function withSizes(
-  rootPath: string,
-  files: { path: string; reason: string; tier: 'strong' | 'possible' }[],
-): Promise<ProposedFile[]> {
-  return Promise.all(
-    files.map(async ({ path: relativePath, reason, tier }) => {
-      const stat = await fs.stat(path.resolve(rootPath, relativePath)).catch(() => undefined)
-      return { path: relativePath, reason, tier, size: stat?.size ?? 0 }
-    }),
-  )
+  const absolutePaths = best.map((file) => path.resolve(workspaceFolder.uri.fsPath, file))
+  await runAnalysis(services, absolutePaths, trimmedQuestion, { target })
 }

@@ -10,8 +10,8 @@ export interface MessageHandlers {
   onExportTickets(): void
   onAsk(question: string, label?: string): void
   onAskProduct(question: string, target: ScanTarget): void
-  onConfirmScope(files: string[], autoScope: boolean, target: ScanTarget): void
-  onCancelScope(target: ScanTarget): void
+  onScanRecent(target: ScanTarget): void
+  onResetAddArea(): void
   onRefreshMap(): void
   onScanProduct(): void
   onCompareSpec(spec: string, areaId?: string): void
@@ -50,12 +50,11 @@ export function routeMessage(message: unknown, handlers: MessageHandlers): void 
       if (message.question.trim().length > 0)
         handlers.onAskProduct(message.question.trim(), message.target ?? 'new')
       return
-    case 'confirmScope':
-      if (message.files.length > 0)
-        handlers.onConfirmScope(message.files, message.autoScope, message.target ?? 'new')
+    case 'scanRecent':
+      handlers.onScanRecent(message.target ?? 'new')
       return
-    case 'cancelScope':
-      handlers.onCancelScope(message.target ?? 'new')
+    case 'resetAddArea':
+      handlers.onResetAddArea()
       return
     case 'refreshMap':
       handlers.onRefreshMap()
@@ -98,13 +97,7 @@ function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
     return typeof record.question === 'string' && isOptionalTarget(record.target)
   if (record.type === 'compareSpec')
     return typeof record.spec === 'string' && isOptionalString(record.areaId)
-  if (record.type === 'confirmScope')
-    return (
-      isStringArray(record.files) &&
-      typeof record.autoScope === 'boolean' &&
-      isOptionalTarget(record.target)
-    )
-  if (record.type === 'chooseFile' || record.type === 'cancelScope')
+  if (record.type === 'chooseFile' || record.type === 'scanRecent')
     return isOptionalTarget(record.target)
   if (record.type === 'refresh') return isOptionalString(record.areaId)
   if (record.type === 'openEvidence') return isEvidence(record.evidence)
@@ -117,6 +110,7 @@ function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
     'export',
     'exportTickets',
     'refreshMap',
+    'resetAddArea',
     'scanProduct',
     'addApiKey',
     'openAnthropicConsole',
@@ -129,10 +123,6 @@ function isOptionalTarget(value: unknown): boolean {
 
 function isOptionalString(value: unknown): boolean {
   return value === undefined || typeof value === 'string'
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string')
 }
 
 function isEvidence(value: unknown): value is Evidence {

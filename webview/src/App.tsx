@@ -11,7 +11,6 @@ import { StateAudit } from './components/state-audit'
 import { FindingList } from './components/finding-list'
 import { SpecCompare } from './components/spec-compare'
 import { Priorities } from './components/priorities'
-import { ScopeReview } from './components/scope-review'
 import { BossReply } from './components/boss-reply'
 import { ShareCard } from './components/share-card'
 import { FollowUpChat } from './components/follow-up-chat'
@@ -195,15 +194,19 @@ export const App = () => {
     scrollToId(targetId)
   }
 
-  if (state.status === 'empty')
-    return <EmptyState mapStatus={state.mapStatus} hasApiKey={state.hasApiKey} />
-  if (state.status === 'scope' && state.scope)
-    return <ScopeReview scope={state.scope} mapStatus={state.mapStatus} />
+  const welcome = (
+    <EmptyState
+      mapStatus={state.mapStatus}
+      hasApiKey={state.hasApiKey}
+      areaSuggestions={state.areaSuggestions}
+    />
+  )
+  if (state.status === 'empty') return welcome
   if (state.status === 'loading')
     return <LoadingState step={state.loadingStep ?? 1} estimateUsd={state.estimateUsd} />
   if (state.status === 'error' && state.error) return <ErrorState error={state.error} />
   const [firstArea] = areas
-  if (!firstArea) return <EmptyState mapStatus={state.mapStatus} hasApiKey={state.hasApiKey} />
+  if (!firstArea) return welcome
 
   const activeArea = areas.find((area) => area.id === activeTab)
   const itemsOf = (areaId: string): FixItem[] => itemsByArea.get(areaId) ?? []
@@ -404,7 +407,7 @@ export const App = () => {
             addArea={state.addArea}
             areaCount={areas.length}
             estimateUsd={state.estimateUsd}
-            mapStatus={state.mapStatus}
+            suggestions={state.areaSuggestions}
           />
         )}
 

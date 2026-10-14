@@ -12,7 +12,6 @@ export interface RetrievalResult {
   strong: ScoredFile[]
   possible: ScoredFile[]
   totalMatches: number
-  sections: { name: string; count: number; files: string[] }[]
 }
 
 const stopwords = new Set([
@@ -140,7 +139,6 @@ export function findRelevantFiles(map: ProjectMap, query: string): RetrievalResu
     strong,
     possible,
     totalMatches: ranked.length,
-    sections: buildSections(ranked, byPath),
   }
 }
 
@@ -236,29 +234,4 @@ function describeMatch(entry: FileMapEntry, token?: string): string {
     default:
       return `Related to ${topic}`
   }
-}
-
-function buildSections(
-  ranked: { path: string; score: number }[],
-  byPath: Map<string, FileMapEntry>,
-): { name: string; count: number; files: string[] }[] {
-  const groups = new Map<string, { files: string[]; relevance: number }>()
-  for (const item of ranked) {
-    const entry = byPath.get(item.path)
-    if (!entry) continue
-    const group = groups.get(entry.featureArea) ?? { files: [], relevance: 0 }
-    group.files.push(item.path)
-    group.relevance += item.score
-    groups.set(entry.featureArea, group)
-  }
-  return (
-    [...groups.entries()]
-      .sort((a, b) => b[1].relevance - a[1].relevance)
-      .slice(0, 3)
-      // Each section is one scan, so it holds at most the best-matching files that fit one area.
-      .map(([name, { files }]) => {
-        const scanned = files.slice(0, discoveryLimits.maxStrong)
-        return { name, count: scanned.length, files: scanned }
-      })
-  )
 }

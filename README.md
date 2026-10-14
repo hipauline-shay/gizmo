@@ -16,7 +16,8 @@ Gizmo is a friendly block dragon who reads the screen or feature you point him a
 
 **One area at a time, one tab each**
 
-- Gizmo scans one screen or feature at a time (an "area"), so each scan stays fast, cheap, and reliable.
+- Type a screen or feature, or tap one of your project's areas, and Gizmo scans it straight away. One screen or feature at a time (an "area"), so each scan stays fast, cheap, and reliable.
+- **What I changed this week:** one tap reviews the code you changed in the last 7 days, the "what did I do this week?" your boss asks about.
 - Want more? **+ Add area** scans the next one and gives it its own tab. Up to 4 areas per report.
 - Everything you add is combined into one **Summary** for your team.
 

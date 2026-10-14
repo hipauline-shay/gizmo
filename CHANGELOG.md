@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.7 — 2026-10-14
+
+- **Type or tap, and Gizmo scans.** Ask about a screen or feature and Gizmo scans its best-matching files straight away. No more file list or "pick a section" step.
+- **Your project's areas as chips.** Gizmo suggests the areas that actually exist in your project (for example Camera, Onboarding, Settings), leaving out the ones you already scanned.
+- **"What I changed this week."** One tap scans the code you changed in the last 7 days (from git, or from file dates without git), newest first, and says how much of the week it covered.
+- The cost of an area is shown right under the box, before you scan.
+
 ## 1.0.6 — 2026-10-14
 
 - **Read it to me** always reads the box it sits in: Gizmo's card reads Gizmo's note on every tab, and "Share with your team" has its own Read it to me for the team update.

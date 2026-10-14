@@ -1,36 +1,17 @@
-import { useState, type FormEvent } from 'react'
 import { postMessage } from '../hooks/use-vscode'
 import { MapStatusLine } from './map-status'
 import { GizmoPose } from './gizmo-pose'
 import { ApiKeySetup } from './api-key-setup'
+import { AreaPicker } from './area-picker'
 import type { MapStatus } from '../types/panel'
-
-const suggestions = [
-  'Explain the camera flow',
-  'How does onboarding work?',
-  'What happens when this request fails?',
-  'Where is user data saved?',
-]
 
 interface EmptyStateProps {
   mapStatus?: MapStatus
   hasApiKey?: boolean
+  areaSuggestions?: string[]
 }
 
-export const EmptyState = ({ mapStatus, hasApiKey }: EmptyStateProps) => {
-  const [question, setQuestion] = useState('')
-
-  const ask = (text: string) => {
-    if (!text.trim()) return
-    postMessage({ type: 'askProduct', question: text.trim() })
-    setQuestion('')
-  }
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault()
-    ask(question)
-  }
-
+export const EmptyState = ({ mapStatus, hasApiKey, areaSuggestions }: EmptyStateProps) => {
   return (
     <div className="centered-state">
       <GizmoPose mood="sleeping" size={120} />
@@ -46,33 +27,7 @@ export const EmptyState = ({ mapStatus, hasApiKey }: EmptyStateProps) => {
         <ApiKeySetup />
       ) : (
         <>
-          <form className="ask-form" onSubmit={handleSubmit}>
-            <label className="visually-hidden" htmlFor="ask-input">
-              What would you like to understand?
-            </label>
-            <input
-              id="ask-input"
-              type="text"
-              value={question}
-              placeholder="What would you like to understand?"
-              onChange={(event) => setQuestion(event.target.value)}
-            />
-            <button type="submit" className="primary-button" disabled={!question.trim()}>
-              Ask
-            </button>
-          </form>
-          <div className="chat-suggestions">
-            {suggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                className="suggestion"
-                onClick={() => ask(suggestion)}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
+          <AreaPicker target="new" suggestions={areaSuggestions} />
           <MapStatusLine mapStatus={mapStatus} />
           <div className="empty-secondary">
             <button
@@ -81,13 +36,6 @@ export const EmptyState = ({ mapStatus, hasApiKey }: EmptyStateProps) => {
               onClick={() => postMessage({ type: 'scanProduct' })}
             >
               Scan whole product
-            </button>
-            <button
-              type="button"
-              className="details-link"
-              onClick={() => postMessage({ type: 'chooseFile' })}
-            >
-              Or choose files manually
             </button>
           </div>
         </>

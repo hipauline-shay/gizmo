@@ -3,8 +3,6 @@ export type {
   PanelStatus,
   ExtensionToWebviewMessage,
   WebviewToExtensionMessage,
-  ScopeProposal,
-  ProposedFile,
   MapStatus,
   AreaView,
   AddAreaState,

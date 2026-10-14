@@ -10,15 +10,16 @@ import { GizmoPanel } from './panel/gizmo-panel'
 import type { MessageHandlers } from './panel/message-router'
 import type { AppServices } from './app-services'
 import {
+  areaSuggestionsFor,
   findArea,
   openEvidence,
-  reportState,
   runAnalysis,
   runChooseFiles,
   runExplainAsProduct,
 } from './commands/explain-selection'
 import { runAnalyzeFlow } from './commands/analyze-flow'
-import { confirmScope, runAskProduct } from './commands/ask-product'
+import { runAskProduct } from './commands/ask-product'
+import { runScanRecent } from './commands/scan-recent'
 import { runAskAboutSelection } from './commands/ask-about-selection'
 import { runExportBrief } from './commands/export-brief'
 import { runExportTickets } from './commands/export-tickets'
@@ -53,13 +54,16 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   mapService.onStatusChange((mapStatus) => {
-    GizmoPanel.instance?.update({ mapStatus })
+    GizmoPanel.instance?.update({ mapStatus, areaSuggestions: areaSuggestionsFor(services) })
   })
 
   const panelHandlers: MessageHandlers = {
     onReady: () => {
       const panel = services.getPanel()
-      panel.update({ mapStatus: mapService.status() })
+      panel.update({
+        mapStatus: mapService.status(),
+        areaSuggestions: areaSuggestionsFor(services),
+      })
       void services.secretService
         .getApiKey()
         .then((key) => panel.update({ hasApiKey: key !== undefined }))
@@ -75,23 +79,8 @@ export function activate(context: vscode.ExtensionContext): void {
     onExportTickets: () => void runExportTickets(services),
     onAsk: (question, label) => void runAskAboutSelection(services, question, label),
     onAskProduct: (question, target) => void runAskProduct(services, question, target),
-    onConfirmScope: (files, autoScope, target) => {
-      const panel = services.getPanel()
-      const question = panel.getState().question ?? 'this feature'
-      void confirmScope({
-        services,
-        question,
-        relativePaths: files,
-        rememberAutoScope: autoScope,
-        target,
-      })
-    },
-    onCancelScope: (target) => {
-      if (target === 'add') services.getPanel().update({ addArea: undefined })
-      else if (services.current.areas.length > 0)
-        services.getPanel().replaceState({ ...reportState(services), chat: [], isAsking: false })
-      else runClearAnalysis(services)
-    },
+    onScanRecent: (target) => void runScanRecent(services, target),
+    onResetAddArea: () => services.getPanel().update({ addArea: undefined }),
     onRefreshMap: () => void mapService.refresh(),
     onScanProduct: () => void runScanProduct(services),
     onCompareSpec: (spec, areaId) => void runCompareSpec(services, spec, areaId),

@@ -4,9 +4,10 @@ import * as vscode from 'vscode'
 import { collectContext } from '../analysis/context-collector'
 import type { AnalysisMeta, ReportArea } from '../analysis/types'
 import { readSettings } from '../services/settings-service'
-import { knownError, toErrorInfo } from '../utilities/errors'
+import { knownError, toErrorInfo, type ErrorInfo } from '../utilities/errors'
 import { resolveInsideRoot } from '../utilities/paths'
 import { maxReportAreas } from '../utilities/limits'
+import { suggestAreas } from '../discovery/area-suggestions'
 import { estimateScanCostUsd } from '../shared/format-cost'
 import type { AreaView, PanelState, ScanTarget } from '../shared/messages'
 import type { AppServices } from '../app-services'
@@ -206,7 +207,10 @@ function sessionSpend(services: AppServices): number {
 
 export function reportState(
   services: AppServices,
-): Pick<PanelState, 'status' | 'areas' | 'combined' | 'isCombining' | 'addArea' | 'estimateUsd'> {
+): Pick<
+  PanelState,
+  'status' | 'areas' | 'combined' | 'isCombining' | 'addArea' | 'estimateUsd' | 'areaSuggestions'
+> {
   const { areas, combined } = services.current
   return {
     status: areas.length > 0 ? 'ready' : 'empty',
@@ -215,7 +219,23 @@ export function reportState(
     isCombining: false,
     addArea: undefined,
     estimateUsd: undefined,
+    areaSuggestions: areaSuggestionsFor(services),
   }
+}
+
+export function areaSuggestionsFor(services: AppServices): string[] | undefined {
+  const map = services.mapService.getMap()
+  if (!map) return undefined
+  const scannedFiles = services.current.areas.flatMap((area) =>
+    area.context.files.map((file) => file.relativePath),
+  )
+  return suggestAreas({ map, scannedFiles })
+}
+
+export function showScanError(services: AppServices, target: ScanTarget, error: ErrorInfo): void {
+  const panel = services.getPanel()
+  if (target === 'add') panel.update({ addArea: { status: 'error', error } })
+  else panel.replaceState({ status: 'error', error, chat: [], isAsking: false })
 }
 
 export function findArea(services: AppServices, areaId?: string): ReportArea | undefined {

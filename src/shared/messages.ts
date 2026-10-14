@@ -2,22 +2,7 @@ import type { CombinedSummary, Evidence, GapAnalysis, ProductAnalysis } from '..
 import type { AnalysisMeta, ChatEntry } from '../analysis/types'
 import type { ErrorInfo } from '../utilities/errors'
 
-export type PanelStatus = 'empty' | 'loading' | 'scope' | 'error' | 'ready'
-
-export interface ProposedFile {
-  path: string
-  reason: string
-  tier: 'strong' | 'possible'
-  size: number
-}
-
-export interface ScopeProposal {
-  question: string
-  strong: ProposedFile[]
-  possible: ProposedFile[]
-  totalMatches: number
-  broad?: { total: number; sections: { name: string; count: number; files: string[] }[] }
-}
+export type PanelStatus = 'empty' | 'loading' | 'error' | 'ready'
 
 export interface MapStatus {
   state: 'mapping' | 'ready' | 'stale' | 'unavailable'
@@ -36,10 +21,9 @@ export interface AreaView {
 
 // The "+ Add area" tab's own progress, so the existing area tabs stay visible while it runs.
 export interface AddAreaState {
-  status: 'scope' | 'loading' | 'error'
+  status: 'loading' | 'error'
   // Set while an existing area is being rescanned, so only that tab shows progress.
   areaId?: string
-  scope?: ScopeProposal
   loadingStep?: 1 | 2 | 3 | 4
   error?: ErrorInfo
 }
@@ -60,8 +44,8 @@ export interface PanelState {
   isAsking: boolean
   specComparison?: GapAnalysis
   isComparing?: boolean
-  question?: string
-  scope?: ScopeProposal
+  // The project's own areas, offered as chips; leaves out areas this report already covers.
+  areaSuggestions?: string[]
   mapStatus?: MapStatus
   cost?: { lastUsd: number; totalUsd: number }
   hasApiKey?: boolean
@@ -78,8 +62,8 @@ export type WebviewToExtensionMessage =
   | { type: 'exportTickets' }
   | { type: 'ask'; question: string; label?: string }
   | { type: 'askProduct'; question: string; target?: ScanTarget }
-  | { type: 'confirmScope'; files: string[]; autoScope: boolean; target?: ScanTarget }
-  | { type: 'cancelScope'; target?: ScanTarget }
+  | { type: 'scanRecent'; target?: ScanTarget }
+  | { type: 'resetAddArea' }
   | { type: 'refreshMap' }
   | { type: 'scanProduct' }
   | { type: 'compareSpec'; spec: string; areaId?: string }

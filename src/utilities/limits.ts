@@ -23,6 +23,5 @@ export const discoveryLimits = {
   possibleScore: 15,
   maxStrong: 6,
   maxPossible: 8,
-  broadThreshold: 25,
   maxRelatedSuggestions: 5,
 } as const

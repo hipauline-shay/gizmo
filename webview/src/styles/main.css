@@ -1002,146 +1002,6 @@ textarea:focus-visible {
   background: var(--pt-text-7);
 }
 
-/* Scope review */
-
-.scope-panel {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 24px;
-  max-width: 720px;
-  margin: 0 auto;
-  background: var(--pt-bg);
-}
-
-.scope-heading {
-  margin: 0;
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.scope-question {
-  margin: 0;
-  color: var(--pt-text-4);
-  font-style: normal;
-  font-size: 12.5px;
-}
-
-.scope-group {
-  border: 1px solid var(--pt-border-card);
-  border-radius: var(--pt-radius-lg);
-  padding: 14px 16px;
-  background: var(--pt-bg-card);
-}
-
-.scope-group-title {
-  margin: 0 0 10px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--pt-text-6);
-}
-
-.scope-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  background: var(--pt-border-card);
-  border-radius: var(--pt-radius);
-  overflow: hidden;
-}
-
-.scope-item {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  background: var(--pt-bg-cell);
-  padding: 11px 13px;
-}
-
-.scope-item label {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  flex: 1;
-}
-
-.scope-reason {
-  font-weight: 500;
-  font-size: 12.5px;
-  color: var(--pt-text-1);
-}
-
-.scope-path {
-  font-family: var(--pt-font-mono);
-  font-size: 10.5px;
-  color: var(--pt-text-6);
-  overflow-wrap: anywhere;
-}
-
-.scope-list-possible {
-  opacity: 0.9;
-}
-
-.scope-not-included {
-  width: 13px;
-  text-align: center;
-  color: var(--pt-text-7);
-}
-
-.scope-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.scope-remember {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  color: var(--pt-text-5);
-}
-
-.section-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  max-width: 420px;
-}
-
-.section-choice {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  background: var(--pt-bg-card);
-  border: 1px solid var(--pt-border-card);
-  border-radius: var(--pt-radius);
-  color: var(--pt-text-primary);
-  padding: 10px 14px;
-  text-align: left;
-}
-
-.section-choice:hover {
-  background: var(--pt-bg-inset);
-}
-
-.section-choice span {
-  color: var(--pt-text-5);
-  font-size: 11.5px;
-  white-space: nowrap;
-}
-
 .empty-secondary {
   display: flex;
   align-items: center;
@@ -2108,13 +1968,6 @@ textarea:focus-visible {
   padding: 24px 0;
 }
 
-/* Inside the "+ Add area" tab the file picker sits at the top instead of centering on a full screen. */
-.scope-inline {
-  min-height: 0;
-  justify-content: flex-start;
-  padding: 8px 0 0;
-}
-
 .add-area {
   display: flex;
   flex-direction: column;
@@ -2135,12 +1988,6 @@ textarea:focus-visible {
   margin: 0;
   font-size: 12px;
   color: var(--pt-text-4);
-}
-
-.scope-limit {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--pt-amber-text);
 }
 
 .summary-areas {
@@ -2181,4 +2028,28 @@ textarea:focus-visible {
   font-size: 12px;
   font-weight: 600;
   color: var(--pt-text-2);
+}
+
+/* Area picker: type or tap a chip, and Gizmo scans straight away. */
+.area-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.add-area .area-picker {
+  max-width: none;
+}
+
+.suggestion-recent {
+  border-color: var(--pt-accent);
+  color: var(--pt-accent);
+}
+
+.area-picker-cost {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pt-text-4);
 }

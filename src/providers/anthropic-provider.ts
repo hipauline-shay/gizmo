@@ -86,7 +86,7 @@ export class AnthropicProvider implements AIProvider {
       }
       const { input_tokens: inputTokens, output_tokens: outputTokens } = message.usage
       this.options.logger.info(
-        `request completed in ${Date.now() - startedAt}ms (model=${message.model} input=${inputTokens} output=${outputTokens})`,
+        `request completed in ${Date.now() - startedAt}ms (model=${message.model} input=${inputTokens} output=${outputTokens} stop=${message.stop_reason})`,
       )
       const costUsd = estimateCostUsd(message.model, { inputTokens, outputTokens })
       if (costUsd !== undefined) this.options.onCost?.(costUsd)
@@ -112,7 +112,10 @@ export class AnthropicProvider implements AIProvider {
       if (message.includes('credit') || message.includes('billing')) return knownError('no-credit')
       if (message.includes('token') || message.includes('too long') || message.includes('exceed'))
         return knownError('context-too-large')
-      this.options.logger.error(`provider rejected request (bad request)`)
+      // Anthropic's validation message describes the request shape, never the code sent.
+      this.options.logger.error(
+        `provider rejected request (bad request): ${error.message.slice(0, 400)}`,
+      )
       return knownError('unknown')
     }
     if (error instanceof Anthropic.APIConnectionError) return knownError('network')

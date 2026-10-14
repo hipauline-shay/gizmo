@@ -22,7 +22,12 @@ export const primaryActionSchema = z.object({
 })
 
 export const userFlowStepSchema = z.object({
-  step: z.coerce.number().int().catch(0),
+  step: z
+    .preprocess(
+      (value) => (typeof value === 'string' ? Number.parseInt(value, 10) : value),
+      z.number().int(),
+    )
+    .catch(0),
   title: z.string(),
   description: lenientText(),
   confidence: confidenceSchema,

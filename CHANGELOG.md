@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4 — 2026-10-14
+
+- Fixed: scanning a flow with branching steps (like the camera flow) could fail with "The AI response could not be understood". Claude sometimes numbered a branch "4a", which made the whole answer unreadable. Gizmo now asks for whole step numbers and repairs a stray value like this instead of failing.
+
 ## 1.0.3 — 2026-10-13
 
 - Big scans no longer fail with "The AI response could not be understood" because of one small slip in Claude's answer. Gizmo now repairs small format slips and skips a single malformed item instead of discarding the whole analysis.

@@ -27,7 +27,7 @@ const schemaDescription = `{
   "evidenceSummary": string (which files and patterns support this explanation),
   "userGoal": string,
   "primaryActions": [{ "label": string, "behavior": string, "evidence": [{ "file": string, "startLine": number, "endLine": number }] }],
-  "userFlow": [{ "step": number, "title": string, "description": string, "confidence": "confirmed" | "likely" | "unclear" }],
+  "userFlow": [{ "step": whole number (1, 2, 3; never "4a": give a branch its own number), "title": string, "description": string, "confidence": "confirmed" | "likely" | "unclear" }],
   "states": [{ "name": "Loading" | "Empty" | "Error" | "Success" | "Disabled" | string, "status": "implemented" | "partial" | "missing" | "unclear", "description": string, "evidence": [...] }],
   "businessRules": Finding[],
   "permissions": Finding[],

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { extractJson, parseAnalysisResponse } from '../src/analysis/response-parser'
+import {
+  extractJson,
+  parseAnalysisResponse,
+  quoteBareValues,
+} from '../src/analysis/response-parser'
 import { GizmoError } from '../src/utilities/errors'
 
 const validResponse = JSON.stringify({
@@ -111,6 +115,13 @@ describe('parseAnalysisResponse', () => {
     expect(analysis.perspectives.pm.mvpMustFix).toEqual([])
   })
 
+  it('reads an answer with an unquoted step number like 4a (the camera-flow failure)', () => {
+    const broken = `{"featureName":"Camera","summary":"Snap to identify.","confidence":"high","userFlow":[{"step":4,"title":"Open camera","description":"","confidence":"confirmed"},{"step":4a,"title":"Take a photo","description":"","confidence":"confirmed"}]}`
+    const analysis = parseAnalysisResponse(broken)
+    expect(analysis.userFlow.map((step) => step.step)).toEqual([4, 4])
+    expect(analysis.userFlow[1]?.title).toBe('Take a photo')
+  })
+
   it('rejects non-JSON responses', () => {
     expect(() => parseAnalysisResponse('I cannot analyze this.')).toThrow(GizmoError)
   })
@@ -131,5 +142,19 @@ describe('extractJson', () => {
 
   it('returns undefined when no object exists', () => {
     expect(extractJson('nothing here')).toBeUndefined()
+  })
+})
+
+describe('quoteBareValues', () => {
+  it('quotes bare words outside strings and keeps real values', () => {
+    expect(quoteBareValues('{"a":4a,"b":12,"c":-1.5e3,"d":true,"e":null,"f":[x, 2]}')).toBe(
+      '{"a":"4a","b":12,"c":-1.5e3,"d":true,"e":null,"f":["x", 2]}',
+    )
+  })
+
+  it('never touches text inside strings, including escaped quotes', () => {
+    const json = '{"text":"step 4a: tap \\"Save\\" now, ratio 16x9","n":1}'
+    expect(quoteBareValues(json)).toBe(json)
+    expect(JSON.parse(quoteBareValues(json))).toEqual(JSON.parse(json))
   })
 })

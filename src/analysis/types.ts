@@ -15,6 +15,8 @@ export interface AnalysisContext {
   excludedFiles: string[]
   truncatedFiles: string[]
   totalChars: number
+  // Picked files that did not fit the size limits; a scan never runs with these silently dropped.
+  skippedSelectedFiles: string[]
   flowQuestion?: string
   productInventory?: string
   maskedSecrets?: number
@@ -38,8 +40,13 @@ export interface AnalysisMeta {
   model: string
 }
 
-export interface AnalysisResult {
+// One scanned area of the report (e.g. "Camera"), shown as its own tab in the panel.
+export interface ReportArea {
+  id: string
+  label: string
   analysis: ProductAnalysis
   meta: AnalysisMeta
   context: AnalysisContext
+  selectionPaths: string[]
+  flowQuestion?: string
 }

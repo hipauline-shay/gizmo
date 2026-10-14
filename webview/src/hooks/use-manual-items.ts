@@ -10,12 +10,17 @@ export interface NewItemInput {
   requestedFor: ItemSource
 }
 
-export function useManualItems() {
-  const [manualItems, setManualItems] = useState<FixItem[]>([])
+export interface ManualItem extends FixItem {
+  areaId: string
+}
 
-  const addManualItem = (input: NewItemInput) => {
+export function useManualItems() {
+  const [manualItems, setManualItems] = useState<ManualItem[]>([])
+
+  const addManualItem = (input: NewItemInput, areaId: string) => {
     setManualItems((current) => [
       {
+        areaId,
         id: crypto.randomUUID(),
         level: input.level,
         kind: input.kind,

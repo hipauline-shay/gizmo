@@ -251,8 +251,14 @@ function buildSections(
     group.relevance += item.score
     groups.set(entry.featureArea, group)
   }
-  return [...groups.entries()]
-    .sort((a, b) => b[1].relevance - a[1].relevance)
-    .slice(0, 6)
-    .map(([name, { files }]) => ({ name, count: files.length, files }))
+  return (
+    [...groups.entries()]
+      .sort((a, b) => b[1].relevance - a[1].relevance)
+      .slice(0, 3)
+      // Each section is one scan, so it holds at most the best-matching files that fit one area.
+      .map(([name, { files }]) => {
+        const scanned = files.slice(0, discoveryLimits.maxStrong)
+        return { name, count: scanned.length, files: scanned }
+      })
+  )
 }

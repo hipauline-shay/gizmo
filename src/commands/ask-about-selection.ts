@@ -10,8 +10,9 @@ export async function runAskAboutSelection(
   const panel = services.getPanel()
   panel.reveal()
 
-  const current = services.current.result
-  if (!current) {
+  const { areas } = services.current
+  const [firstArea] = areas
+  if (!firstArea) {
     void vscode.window.showInformationMessage(
       'Run "Gizmo: Explain as Product" on a file or folder first, then ask questions about it.',
     )
@@ -21,7 +22,7 @@ export async function runAskAboutSelection(
   const asked =
     question ??
     (await vscode.window.showInputBox({
-      prompt: `Ask about "${current.meta.selectionLabel}"`,
+      prompt: `Ask about "${areas.length === 1 ? firstArea.meta.selectionLabel : 'this report'}"`,
       placeHolder: 'e.g. What happens when this request fails?',
     }))
   if (!asked || asked.trim().length === 0) return
@@ -33,11 +34,7 @@ export async function runAskAboutSelection(
   panel.update({ chat, isAsking: true })
 
   try {
-    const { answer } = await services.provider.askFollowUp(
-      current.context,
-      current.analysis,
-      asked.trim(),
-    )
+    const { answer } = await services.provider.askFollowUp(areas, asked.trim())
     panel.update({
       chat: [...chat, { role: 'assistant' as const, text: answer }],
       isAsking: false,

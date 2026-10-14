@@ -7,6 +7,8 @@ export type GizmoErrorCode =
   | 'auth-failed'
   | 'rate-limited'
   | 'context-too-large'
+  | 'selection-too-large'
+  | 'too-many-areas'
   | 'invalid-response'
   | 'network'
   | 'file-changed'
@@ -76,10 +78,22 @@ const errorCatalog: Record<GizmoErrorCode, ErrorInfo> = {
     action:
       'Select a smaller folder or a single feature area, or raise "Gizmo: Max Context Size" in settings.',
   },
+  'selection-too-large': {
+    code: 'selection-too-large',
+    message: 'This is too big for one scan.',
+    action:
+      'Pick fewer files: right-click a single file instead, or ask about one screen by name. You can add the rest afterwards with "+ Add area". Nothing was sent or charged.',
+  },
+  'too-many-areas': {
+    code: 'too-many-areas',
+    message: 'This report already has 4 areas, the most one report can hold.',
+    action: 'Start a new scan for more areas.',
+  },
   'invalid-response': {
     code: 'invalid-response',
     message: 'The AI response could not be understood.',
-    action: 'This is usually temporary. Try the analysis again.',
+    action:
+      'Try again, or scan a smaller area. Gizmo never retries on its own, so you are not charged twice.',
   },
   network: {
     code: 'network',

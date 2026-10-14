@@ -77,13 +77,16 @@ describe('exportTicketsToMarkdown', () => {
   })
 
   const comparison = gapAnalysisSchema.parse(JSON.parse(validGapResponse))
-  const markdown = exportTicketsToMarkdown(analysis, undefined, comparison)
+  const markdown = exportTicketsToMarkdown({
+    areas: [{ label: 'Audio', analysis, specComparison: comparison }],
+  })
 
   it('creates one ticket block per finding', () => {
     expect(markdown).toContain(
       '## Ticket 1: Add missing state — No error state for playback failure',
     )
-    expect(markdown).toContain('## Ticket 2: Mitigate risk — Play button does nothing')
+    expect(markdown).toContain('## Ticket 2: Decide — Play button does nothing')
+    expect(markdown).toContain('**Area:** Audio')
     expect(markdown).toContain('## Ticket 3: Clarify — Should playback auto-stop?')
   })
 
@@ -103,6 +106,8 @@ describe('exportTicketsToMarkdown', () => {
       summary: 'Y',
       confidence: 'high',
     })
-    expect(exportTicketsToMarkdown(clean)).toContain('No gaps, risks, concerns, or open questions')
+    expect(exportTicketsToMarkdown({ areas: [{ label: 'X', analysis: clean }] })).toContain(
+      'No blockers, gaps, concerns, or open questions',
+    )
   })
 })

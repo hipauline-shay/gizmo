@@ -1,12 +1,17 @@
 import * as vscode from 'vscode'
 import { toErrorInfo } from '../utilities/errors'
+import { findArea } from './explain-selection'
 import type { AppServices } from '../app-services'
 
-export async function runCompareSpec(services: AppServices, spec?: string): Promise<void> {
+export async function runCompareSpec(
+  services: AppServices,
+  spec?: string,
+  areaId?: string,
+): Promise<void> {
   const panel = services.getPanel()
   panel.reveal()
 
-  const current = services.current.result
+  const current = findArea(services, areaId)
   if (!current) {
     void vscode.window.showInformationMessage(
       'Run "Gizmo: Explain as Product" first, then compare the result to a spec.',
@@ -29,7 +34,7 @@ export async function runCompareSpec(services: AppServices, spec?: string): Prom
       current.analysis,
       specText.trim(),
     )
-    services.current.specComparison = comparison
+    services.current.specComparisons[current.id] = comparison
     panel.update({ specComparison: comparison, isComparing: false })
     services.logger.info(`spec comparison complete: items=${comparison.items.length}`)
   } catch (error) {

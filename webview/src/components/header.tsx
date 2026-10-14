@@ -1,14 +1,15 @@
 import { postMessage } from '../hooks/use-vscode'
 import { GizmoIcon } from './gizmo-icon'
-import type { AnalysisMeta } from '../types/panel'
 
 interface HeaderProps {
-  meta?: AnalysisMeta
+  title?: string
   status: string
+  // The area the Rescan button re-runs; absent on the Summary and "+ Add area" tabs.
+  rescanAreaId?: string
   onShare: () => void
 }
 
-export const Header = ({ meta, status, onShare }: HeaderProps) => (
+export const Header = ({ title, status, rescanAreaId, onShare }: HeaderProps) => (
   <header className="header">
     <div className="header-titles">
       <span className="brand">
@@ -17,10 +18,10 @@ export const Header = ({ meta, status, onShare }: HeaderProps) => (
         </span>
         Gizmo
       </span>
-      {meta && (
+      {title && (
         <>
           <span className="header-divider" aria-hidden="true" />
-          <span className="header-file">{meta.selectionLabel}</span>
+          <span className="header-file">{title}</span>
         </>
       )}
       <span className="header-divider" aria-hidden="true" />
@@ -30,14 +31,16 @@ export const Header = ({ meta, status, onShare }: HeaderProps) => (
       </span>
     </div>
     <div className="header-actions">
-      <button
-        type="button"
-        className="ghost-button"
-        aria-label="Re-run analysis"
-        onClick={() => postMessage({ type: 'refresh' })}
-      >
-        Rescan
-      </button>
+      {rescanAreaId && (
+        <button
+          type="button"
+          className="ghost-button"
+          aria-label="Scan this area again"
+          onClick={() => postMessage({ type: 'refresh', areaId: rescanAreaId })}
+        >
+          Rescan
+        </button>
+      )}
       <button
         type="button"
         className="primary-button"

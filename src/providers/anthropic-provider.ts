@@ -1,14 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { AIProvider } from './ai-provider'
 import type { AnalysisContext, FollowUpAnswer } from '../analysis/types'
-import type { GapAnalysis, ProductAnalysis } from '../analysis/schemas'
+import type { CombinedSummary, GapAnalysis, ProductAnalysis } from '../analysis/schemas'
 import {
   analysisSystemPrompt,
   buildAnalysisPrompt,
+  buildCombinedSummaryPrompt,
   buildFollowUpPrompt,
   buildSpecComparisonPrompt,
+  type PromptArea,
 } from '../analysis/prompt-builder'
-import { parseAnalysisResponse, parseGapAnalysisResponse } from '../analysis/response-parser'
+import {
+  parseAnalysisResponse,
+  parseCombinedSummaryResponse,
+  parseGapAnalysisResponse,
+} from '../analysis/response-parser'
 import { knownError, GizmoError } from '../utilities/errors'
 import type { Logger } from '../services/logger'
 import { estimateCostUsd } from './pricing'
@@ -34,13 +40,14 @@ export class AnthropicProvider implements AIProvider {
     return parseAnalysisResponse(text)
   }
 
-  async askFollowUp(
-    context: AnalysisContext,
-    analysis: ProductAnalysis,
-    question: string,
-  ): Promise<FollowUpAnswer> {
-    const text = await this.complete(buildFollowUpPrompt(context, analysis, question))
+  async askFollowUp(areas: PromptArea[], question: string): Promise<FollowUpAnswer> {
+    const text = await this.complete(buildFollowUpPrompt({ areas, question }))
     return { answer: text.trim() }
+  }
+
+  async summarizeAreas(areas: Pick<PromptArea, 'label' | 'analysis'>[]): Promise<CombinedSummary> {
+    const text = await this.complete(buildCombinedSummaryPrompt(areas))
+    return parseCombinedSummaryResponse(text)
   }
 
   async compareToSpec(

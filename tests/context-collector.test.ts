@@ -51,6 +51,30 @@ describe('collectContext', () => {
     ).rejects.toThrow(GizmoError)
   })
 
+  it('reports picked files that do not fit one scan, so nothing is sent half-done', async () => {
+    for (const name of ['a', 'b', 'c'])
+      await write(`src/${name}.ts`, `export const ${name} = true\n`)
+    const context = await collectContext({
+      rootPath: root,
+      selectionPaths: ['a', 'b', 'c'].map((name) => path.join(root, `src/${name}.ts`)),
+      limits: { maxFiles: 2 },
+    })
+    expect(context.files).toHaveLength(2)
+    expect(context.skippedSelectedFiles).toEqual(['src/c.ts'])
+  })
+
+  it('does not count imports that did not fit as skipped picks', async () => {
+    await write('src/screen.ts', "import { a } from './a'\nimport { b } from './b'\n")
+    await write('src/a.ts', 'export const a = 1\n')
+    await write('src/b.ts', 'export const b = 2\n')
+    const context = await collectContext({
+      rootPath: root,
+      selectionPath: path.join(root, 'src/screen.ts'),
+      limits: { maxFiles: 2 },
+    })
+    expect(context.skippedSelectedFiles).toEqual([])
+  })
+
   it('skips node_modules and build output', async () => {
     await write('node_modules/pkg/index.js', 'module.exports = {}\n')
     await write('dist/bundle.js', 'var x = 1\n')

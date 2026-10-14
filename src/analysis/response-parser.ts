@@ -1,6 +1,8 @@
 import {
+  combinedSummarySchema,
   gapAnalysisSchema,
   productAnalysisSchema,
+  type CombinedSummary,
   type GapAnalysis,
   type ProductAnalysis,
 } from './schemas'
@@ -25,6 +27,15 @@ export function parseGapAnalysisResponse(rawText: string): GapAnalysis {
   const parsed = parseJson(jsonText)
 
   const result = gapAnalysisSchema.safeParse(parsed)
+  if (!result.success)
+    throw knownError('invalid-response', 'The response did not match the expected structure.')
+  return result.data
+}
+
+export function parseCombinedSummaryResponse(rawText: string): CombinedSummary {
+  const jsonText = extractJson(rawText)
+  if (!jsonText) throw knownError('invalid-response', 'No JSON object was found in the response.')
+  const result = combinedSummarySchema.safeParse(parseJson(jsonText))
   if (!result.success)
     throw knownError('invalid-response', 'The response did not match the expected structure.')
   return result.data

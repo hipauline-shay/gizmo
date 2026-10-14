@@ -1,14 +1,12 @@
 import type { AnalysisContext, FollowUpAnswer } from '../analysis/types'
-import type { GapAnalysis, ProductAnalysis } from '../analysis/schemas'
+import type { CombinedSummary, GapAnalysis, ProductAnalysis } from '../analysis/schemas'
+import type { PromptArea } from '../analysis/prompt-builder'
 
 export interface AIProvider {
   readonly name: string
   analyze(context: AnalysisContext): Promise<ProductAnalysis>
-  askFollowUp(
-    context: AnalysisContext,
-    analysis: ProductAnalysis,
-    question: string,
-  ): Promise<FollowUpAnswer>
+  askFollowUp(areas: PromptArea[], question: string): Promise<FollowUpAnswer>
+  summarizeAreas(areas: Pick<PromptArea, 'label' | 'analysis'>[]): Promise<CombinedSummary>
   compareToSpec(
     context: AnalysisContext,
     analysis: ProductAnalysis,

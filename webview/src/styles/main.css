@@ -270,12 +270,70 @@ textarea:focus-visible {
   cursor: default;
 }
 
-.mode-tabs {
+/* Area tabs: one per scanned area, then "+ Add area"; Summary stays pinned on the right and
+   the area tabs scroll sideways when the panel is narrow. */
+.area-tabs {
   display: flex;
-  gap: 2px;
+  align-items: stretch;
   padding: 0 20px;
   border-bottom: 1px solid var(--pt-border);
   background: var(--pt-bg);
+}
+
+.area-tabs-scroller {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.area-tabs-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fades the edge when more tabs are hidden to the right. */
+.area-tabs-scroller.is-overflowing {
+  mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+}
+
+.area-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1 0 auto;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.area-tab-label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.area-tab-add {
+  flex: 0 0 auto;
+  min-width: 0;
+  color: var(--pt-accent);
+}
+
+.area-tabs-pinned {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  border-left: 1px solid var(--pt-border);
+}
+
+.area-tabs-pinned .area-tab {
+  flex: 0 0 auto;
+}
+
+.area-tab-busy {
+  color: var(--pt-accent);
 }
 
 .tab {
@@ -1082,18 +1140,6 @@ textarea:focus-visible {
   color: var(--pt-text-5);
   font-size: 11.5px;
   white-space: nowrap;
-}
-
-/* Related code */
-
-.related-code {
-  border: 1px solid var(--pt-info);
-  border-radius: var(--pt-radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--pt-bg-card);
 }
 
 .empty-secondary {
@@ -2052,4 +2098,79 @@ textarea:focus-visible {
   background: var(--pt-accent-tint-bg);
   border-color: var(--pt-accent);
   color: var(--pt-text-primary);
+}
+
+/* Scan by area */
+
+.centered-state-inline {
+  min-height: 0;
+  padding: 24px 0;
+}
+
+.add-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.add-area .ask-form {
+  align-self: stretch;
+}
+
+.add-area p {
+  margin: 0;
+}
+
+.add-area-count {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pt-text-4);
+}
+
+.scope-limit {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--pt-amber-text);
+}
+
+.summary-areas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.summary-area-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--pt-text-primary);
+}
+
+.summary-area-counts {
+  color: var(--pt-text-4);
+}
+
+.summary-area-findings + .summary-area-findings {
+  margin-top: 12px;
+}
+
+.summary-area-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pt-text-2);
 }

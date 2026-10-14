@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { productAnalysisSchema } from '../src/analysis/schemas'
 import { exportToMarkdown } from '../src/export/markdown-exporter'
-import { buildAnalysisPrompt } from '../src/analysis/prompt-builder'
+import {
+  buildAnalysisPrompt,
+  buildCombinedSummaryPrompt,
+  buildFollowUpPrompt,
+} from '../src/analysis/prompt-builder'
 import { buildProductInventory, pickProductScanFiles } from '../src/discovery/product-inventory'
 import type { AnalysisContext } from '../src/analysis/types'
 import type { FileMapEntry, ProjectMap } from '../src/discovery/project-mapper'
@@ -49,29 +53,29 @@ const map: ProjectMap = {
 }
 
 describe('review schema', () => {
-  it('accepts completion status, risk level, and whats working', () => {
+  it('keeps only the sections the panel shows', () => {
     const analysis = productAnalysisSchema.parse({
       featureName: 'Camera Upload',
       summary: 'Uploads captured images.',
       confidence: 'high',
-      completionStatus: 'mostly-complete',
-      riskLevel: 'medium',
       whatsWorking: [{ text: 'Camera opens', confidence: 'confirmed', evidence: [] }],
+      userFlow: [{ step: 1, title: 'Open camera' }],
+      businessRules: [{ text: 'Old section', confidence: 'confirmed', evidence: [] }],
     })
-    expect(analysis.completionStatus).toBe('mostly-complete')
-    expect(analysis.riskLevel).toBe('medium')
     expect(analysis.whatsWorking[0]?.text).toBe('Camera opens')
+    expect(Object.keys(analysis)).not.toContain('userFlow')
+    expect(Object.keys(analysis)).not.toContain('businessRules')
   })
 
-  it('defaults review fields for older responses', () => {
+  it('defaults every section for minimal responses', () => {
     const analysis = productAnalysisSchema.parse({
       featureName: 'X',
       summary: 'Y',
       confidence: 'low',
     })
-    expect(analysis.completionStatus).toBe('in-progress')
-    expect(analysis.riskLevel).toBe('medium')
     expect(analysis.whatsWorking).toEqual([])
+    expect(analysis.perspectives.pm.mvpMustFix).toEqual([])
+    expect(analysis.perspectives.stakeholder.launchBlockers).toEqual([])
   })
 
   it('accepts team-provided confidence on findings', () => {
@@ -79,29 +83,23 @@ describe('review schema', () => {
       featureName: 'X',
       summary: 'Y',
       confidence: 'high',
-      businessRules: [{ text: 'Shipping without offline mode', confidence: 'team', evidence: [] }],
+      risks: [{ text: 'Shipping without offline mode', confidence: 'team', evidence: [] }],
     })
-    expect(analysis.businessRules[0]?.confidence).toBe('team')
+    expect(analysis.risks[0]?.confidence).toBe('team')
   })
 })
 
-describe('role perspectives', () => {
-  it('parses role-specific perspectives', () => {
+describe('perspectives', () => {
+  it('parses the designer, PM and stakeholder findings the panel shows', () => {
     const analysis = productAnalysisSchema.parse({
       featureName: 'Camera Upload',
       summary: 'Uploads captured images.',
       confidence: 'high',
       perspectives: {
         designer: {
-          painPoints: [{ text: 'No feedback after tapping upload', confidence: 'confirmed' }],
           designSystem: [{ text: 'Hardcoded #FF6600 instead of a token', confidence: 'confirmed' }],
         },
-        pm: {
-          valueProposition: 'Instant animal identification from a photo.',
-          sellingPoints: [{ text: 'Identification works end to end', confidence: 'confirmed' }],
-          mvpMustFix: [{ text: 'Handle upload failures', confidence: 'confirmed' }],
-          analytics: [{ text: 'No tracking of identification success rate', confidence: 'likely' }],
-        },
+        pm: { mvpMustFix: [{ text: 'Handle upload failures', confidence: 'confirmed' }] },
         stakeholder: {
           launchSummary: 'Camera capture and identification are working.',
           launchGoal: 'Let users identify animals in the wild.',
@@ -109,57 +107,28 @@ describe('role perspectives', () => {
         },
       },
     })
-    expect(analysis.perspectives.designer.painPoints).toHaveLength(1)
-    expect(analysis.perspectives.pm.valueProposition).toContain('Instant')
+    expect(analysis.perspectives.designer.designSystem).toHaveLength(1)
+    expect(analysis.perspectives.pm.mvpMustFix[0]?.text).toBe('Handle upload failures')
     expect(analysis.perspectives.stakeholder.launchBlockers[0]?.text).toContain('Upload failures')
   })
 
-  it('defaults perspectives for older responses', () => {
-    const analysis = productAnalysisSchema.parse({
-      featureName: 'X',
-      summary: 'Y',
-      confidence: 'low',
-    })
-    expect(analysis.perspectives.designer.painPoints).toEqual([])
-    expect(analysis.perspectives.pm.valueProposition).toBe('')
-    expect(analysis.perspectives.stakeholder.launchBlockers).toEqual([])
-  })
-
-  it('exports perspective sections in the brief', () => {
+  it('exports the launch overview and findings in the brief', () => {
     const analysis = productAnalysisSchema.parse({
       featureName: 'Camera Upload',
       summary: 'Uploads captured images.',
       confidence: 'high',
+      whatsWorking: [{ text: 'Upload succeeds', confidence: 'confirmed', evidence: [] }],
       perspectives: {
         designer: { designSystem: [{ text: 'Hardcoded color', confidence: 'confirmed' }] },
-        pm: { valueProposition: 'Instant identification.' },
         stakeholder: { launchSummary: 'Nearly ready.', launchGoal: 'Grow retention.' },
       },
     })
-    const markdown = exportToMarkdown(analysis)
-    expect(markdown).toContain('## Design system & visual consistency (Designer)')
-    expect(markdown).toContain('## Positioning (PM)')
-    expect(markdown).toContain('## Launch overview (Stakeholder)')
+    const markdown = exportToMarkdown({ areas: [{ label: 'Camera', analysis }] })
+    expect(markdown).toContain('# Camera Upload')
+    expect(markdown).toContain('Nearly ready.')
     expect(markdown).toContain('**Goal of this launch:** Grow retention.')
-  })
-})
-
-describe('brief export with review fields', () => {
-  it('leads with status, risk, and confidence', () => {
-    const analysis = productAnalysisSchema.parse({
-      featureName: 'Camera Upload',
-      summary: 'Uploads captured images.',
-      confidence: 'high',
-      completionStatus: 'mostly-complete',
-      riskLevel: 'medium',
-      whatsWorking: [{ text: 'Upload succeeds', confidence: 'confirmed', evidence: [] }],
-    })
-    const markdown = exportToMarkdown(analysis)
-    expect(markdown).toContain(
-      '**Status:** Mostly complete · **Risk:** Medium · **Confidence:** High',
-    )
     expect(markdown).toContain("## What's working")
-    expect(markdown).toContain('Upload succeeds')
+    expect(markdown).toContain('## Design system')
   })
 })
 
@@ -179,6 +148,7 @@ describe('team notes and inventory in prompts', () => {
     excludedFiles: [],
     truncatedFiles: [],
     totalChars: 30,
+    skippedSelectedFiles: [],
   }
 
   it('includes the product inventory for full scans', () => {
@@ -188,6 +158,60 @@ describe('team notes and inventory in prompts', () => {
     })
     expect(prompt).toContain('Project inventory: 5 source files.')
     expect(prompt).toContain('do not invent behavior')
+  })
+})
+
+describe('prompts across areas', () => {
+  const context: AnalysisContext = {
+    rootPath: '/project',
+    selectionLabel: 'screens/scan.tsx',
+    files: [
+      {
+        relativePath: 'screens/scan.tsx',
+        content: 'export const Scan = () => null',
+        numberedContent: '   1| export const Scan = () => null',
+        truncated: false,
+        reason: 'selected',
+      },
+    ],
+    excludedFiles: [],
+    truncatedFiles: [],
+    totalChars: 30,
+    skippedSelectedFiles: [],
+  }
+  const analysis = productAnalysisSchema.parse({
+    featureName: 'Scan',
+    summary: 'Scans.',
+    confidence: 'high',
+  })
+
+  it('sends the code with a question about one area', () => {
+    const prompt = buildFollowUpPrompt({
+      areas: [{ label: 'Scan', analysis, context }],
+      question: 'Ready?',
+    })
+    expect(prompt).toContain('export const Scan')
+  })
+
+  it('sends findings only, no code, for a question across several areas', () => {
+    const prompt = buildFollowUpPrompt({
+      areas: [
+        { label: 'Scan', analysis, context },
+        { label: 'Settings', analysis, context },
+      ],
+      question: 'Ready?',
+    })
+    expect(prompt).not.toContain('export const Scan')
+    expect(prompt).toContain('=== AREA: Settings ===')
+  })
+
+  it('builds the combined summary from findings only', () => {
+    const prompt = buildCombinedSummaryPrompt([
+      { label: 'Scan', analysis },
+      { label: 'Settings', analysis },
+    ])
+    expect(prompt).toContain('"area":"Settings"')
+    expect(prompt).not.toContain('export const')
   })
 })
 

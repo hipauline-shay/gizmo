@@ -9,14 +9,20 @@ import { runScanProduct } from './commands/scan-product'
 import { GizmoPanel } from './panel/gizmo-panel'
 import type { MessageHandlers } from './panel/message-router'
 import type { AppServices } from './app-services'
-import { openEvidence, runAnalysis, runExplainAsProduct } from './commands/explain-selection'
+import {
+  findArea,
+  openEvidence,
+  reportState,
+  runAnalysis,
+  runChooseFiles,
+  runExplainAsProduct,
+} from './commands/explain-selection'
 import { runAnalyzeFlow } from './commands/analyze-flow'
 import { confirmScope, runAskProduct } from './commands/ask-product'
 import { runAskAboutSelection } from './commands/ask-about-selection'
 import { runExportBrief } from './commands/export-brief'
 import { runExportTickets } from './commands/export-tickets'
 import { promptForApiKey, runConfigureProvider } from './commands/configure-provider'
-import { resolveInsideRoot } from './utilities/paths'
 import { runOpenPanel } from './commands/open-panel'
 import { runClearAnalysis } from './commands/clear-analysis'
 import { runCompareSpec } from './commands/compare-spec'
@@ -43,7 +49,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     mapService,
     getPanel: () => GizmoPanel.getOrCreate(context.extensionUri, panelHandlers),
-    current: {},
+    current: { areas: [], specComparisons: {} },
   }
 
   mapService.onStatusChange((mapStatus) => {
@@ -58,43 +64,37 @@ export function activate(context: vscode.ExtensionContext): void {
         .getApiKey()
         .then((key) => panel.update({ hasApiKey: key !== undefined }))
     },
-    onChooseFile: () => void runExplainAsProduct(services),
-    onRefresh: () => {
-      const paths = services.current.selectionPaths
-      if (paths && paths.length > 0)
-        void runAnalysis(services, paths, services.current.flowQuestion)
-      else void runExplainAsProduct(services)
+    onChooseFile: (target) => void runChooseFiles(services, target),
+    onRefresh: (areaId) => {
+      const area = findArea(services, areaId)
+      if (!area) return void runChooseFiles(services, 'new')
+      void runAnalysis(services, area.selectionPaths, area.flowQuestion, { areaId: area.id })
     },
     onClear: () => runClearAnalysis(services),
     onExport: () => void runExportBrief(services),
     onExportTickets: () => void runExportTickets(services),
     onAsk: (question, label) => void runAskAboutSelection(services, question, label),
-    onAskProduct: (question) => void runAskProduct(services, question),
-    onConfirmScope: (files, autoScope) => {
-      const question = services.getPanel().getState().question ?? 'this feature'
-      void confirmScope(services, question, files, autoScope)
-    },
-    onCancelScope: () => runClearAnalysis(services),
-    onRefreshMap: () => void mapService.refresh(),
-    onAddRelated: (files) => {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
-      const currentPaths = services.current.selectionPaths
-      if (!workspaceFolder || !currentPaths) return
-      const additions = files.flatMap((relativePath) => {
-        const absolute = resolveInsideRoot(workspaceFolder.uri.fsPath, relativePath)
-        return absolute ? [absolute] : []
-      })
-      if (additions.length === 0) return
-      void runAnalysis(
+    onAskProduct: (question, target) => void runAskProduct(services, question, target),
+    onConfirmScope: (files, autoScope, target) => {
+      const panel = services.getPanel()
+      const question = panel.getState().question ?? 'this feature'
+      void confirmScope({
         services,
-        [...new Set([...currentPaths, ...additions])],
-        services.current.flowQuestion,
-        { preserveChat: true },
-      )
+        question,
+        relativePaths: files,
+        rememberAutoScope: autoScope,
+        target,
+      })
     },
-    onDismissRelated: () => services.getPanel().update({ relatedSuggestions: [] }),
+    onCancelScope: (target) => {
+      if (target === 'add') services.getPanel().update({ addArea: undefined })
+      else if (services.current.areas.length > 0)
+        services.getPanel().replaceState({ ...reportState(services), chat: [], isAsking: false })
+      else runClearAnalysis(services)
+    },
+    onRefreshMap: () => void mapService.refresh(),
     onScanProduct: () => void runScanProduct(services),
-    onCompareSpec: (spec) => void runCompareSpec(services, spec),
+    onCompareSpec: (spec, areaId) => void runCompareSpec(services, spec, areaId),
     onOpenEvidence: (evidence) => void openEvidence(services, evidence),
     onCopy: (text) => void vscode.env.clipboard.writeText(text),
     onAddApiKey: () => void promptForApiKey(services),
@@ -115,6 +115,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       'gizmo.explainAsProduct',
       (uri?: vscode.Uri, uris?: vscode.Uri[]) => runExplainAsProduct(services, uri, uris),
+    ),
+    vscode.commands.registerCommand('gizmo.addToReport', (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
+      runExplainAsProduct(services, uri, uris, services.current.areas.length > 0 ? 'add' : 'new'),
     ),
     vscode.commands.registerCommand('gizmo.analyzeFlow', (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
       runAnalyzeFlow(services, uri, uris),

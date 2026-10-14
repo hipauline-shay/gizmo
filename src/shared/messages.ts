@@ -1,4 +1,4 @@
-import type { ProductAnalysis, Evidence, GapAnalysis } from '../analysis/schemas'
+import type { CombinedSummary, Evidence, GapAnalysis, ProductAnalysis } from '../analysis/schemas'
 import type { AnalysisMeta, ChatEntry } from '../analysis/types'
 import type { ErrorInfo } from '../utilities/errors'
 
@@ -8,6 +8,7 @@ export interface ProposedFile {
   path: string
   reason: string
   tier: 'strong' | 'possible'
+  size: number
 }
 
 export interface ScopeProposal {
@@ -23,17 +24,37 @@ export interface MapStatus {
   fileCount: number
 }
 
-export interface RelatedSuggestionView {
-  path: string
-  reason: string
+// "new" starts a fresh report; "add" scans one more area into the current report.
+export type ScanTarget = 'new' | 'add'
+
+export interface AreaView {
+  id: string
+  label: string
+  analysis: ProductAnalysis
+  meta: AnalysisMeta
+}
+
+// The "+ Add area" tab's own progress, so the existing area tabs stay visible while it runs.
+export interface AddAreaState {
+  status: 'scope' | 'loading' | 'error'
+  // Set while an existing area is being rescanned, so only that tab shows progress.
+  areaId?: string
+  scope?: ScopeProposal
+  loadingStep?: 1 | 2 | 3 | 4
+  error?: ErrorInfo
 }
 
 export interface PanelState {
   status: PanelStatus
   loadingStep?: 1 | 2 | 3 | 4
   error?: ErrorInfo
-  analysis?: ProductAnalysis
-  meta?: AnalysisMeta
+  areas?: AreaView[]
+  // Asks the panel to open this area's tab (after a scan finishes); the nonce re-triggers it.
+  focusArea?: { id: string; nonce: number }
+  combined?: CombinedSummary
+  isCombining?: boolean
+  addArea?: AddAreaState
+  estimateUsd?: number
   chat: ChatEntry[]
   isAsking: boolean
   specComparison?: GapAnalysis
@@ -41,7 +62,6 @@ export interface PanelState {
   question?: string
   scope?: ScopeProposal
   mapStatus?: MapStatus
-  relatedSuggestions?: RelatedSuggestionView[]
   cost?: { lastUsd: number; totalUsd: number }
   hasApiKey?: boolean
 }
@@ -50,20 +70,18 @@ export type ExtensionToWebviewMessage = { type: 'state'; state: PanelState }
 
 export type WebviewToExtensionMessage =
   | { type: 'ready' }
-  | { type: 'chooseFile' }
-  | { type: 'refresh' }
+  | { type: 'chooseFile'; target?: ScanTarget }
+  | { type: 'refresh'; areaId?: string }
   | { type: 'clear' }
   | { type: 'export' }
   | { type: 'exportTickets' }
   | { type: 'ask'; question: string; label?: string }
-  | { type: 'askProduct'; question: string }
-  | { type: 'confirmScope'; files: string[]; autoScope: boolean }
-  | { type: 'cancelScope' }
+  | { type: 'askProduct'; question: string; target?: ScanTarget }
+  | { type: 'confirmScope'; files: string[]; autoScope: boolean; target?: ScanTarget }
+  | { type: 'cancelScope'; target?: ScanTarget }
   | { type: 'refreshMap' }
-  | { type: 'addRelated'; files: string[] }
-  | { type: 'dismissRelated' }
   | { type: 'scanProduct' }
-  | { type: 'compareSpec'; spec: string }
+  | { type: 'compareSpec'; spec: string; areaId?: string }
   | { type: 'openEvidence'; evidence: Evidence }
   | { type: 'copy'; text: string }
   | { type: 'openEmail'; subject: string; body: string }

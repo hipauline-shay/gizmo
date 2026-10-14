@@ -1,13 +1,20 @@
+import fs from 'fs/promises'
+import path from 'path'
 import * as vscode from 'vscode'
 import { resolveInsideRoot } from '../utilities/paths'
 import { findRelevantFiles } from '../discovery/file-retrieval'
 import { discoveryLimits } from '../utilities/limits'
+import { knownError, type ErrorInfo } from '../utilities/errors'
 import { readSettings } from '../services/settings-service'
 import { runAnalysis } from './explain-selection'
 import type { AppServices } from '../app-services'
-import type { ScopeProposal } from '../shared/messages'
+import type { ProposedFile, ScanTarget, ScopeProposal } from '../shared/messages'
 
-export async function runAskProduct(services: AppServices, question?: string): Promise<void> {
+export async function runAskProduct(
+  services: AppServices,
+  question?: string,
+  target: ScanTarget = 'new',
+): Promise<void> {
   const panel = services.getPanel()
   panel.reveal()
 
@@ -22,65 +29,45 @@ export async function runAskProduct(services: AppServices, question?: string): P
   if (!asked || asked.trim().length === 0) return
   const trimmedQuestion = asked.trim()
 
+  const showError = (error: ErrorInfo): void => {
+    if (target === 'add') panel.update({ addArea: { status: 'error', error } })
+    else panel.replaceState({ status: 'error', error, chat: [], isAsking: false })
+  }
+
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
   if (!workspaceFolder) {
-    panel.replaceState({
-      status: 'error',
-      error: {
-        code: 'no-workspace',
-        message: 'No folder is open in this window.',
-        action: 'Open a project folder, then ask again.',
-      },
-      chat: [],
-      isAsking: false,
-    })
+    const { code, message, action } = knownError('no-workspace')
+    showError({ code, message, action })
     return
   }
 
   const map = await services.mapService.ensureMap()
   if (!map || map.files.length === 0) {
-    panel.replaceState({
-      status: 'error',
-      error: {
-        code: 'unknown',
-        message: 'Gizmo could not map this project.',
-        action:
-          'Make sure the project contains JavaScript or TypeScript source files, then try "Refresh project map".',
-      },
-      chat: [],
-      isAsking: false,
+    showError({
+      code: 'unknown',
+      message: 'Gizmo could not map this project.',
+      action:
+        'Make sure the project contains JavaScript or TypeScript source files, then try "Refresh project map".',
     })
     return
   }
 
   const result = findRelevantFiles(map, trimmedQuestion)
   if (result.strong.length === 0 && result.possible.length === 0) {
-    panel.replaceState({
-      status: 'error',
-      error: {
-        code: 'no-selection',
-        message: `No files in this project seem to match "${trimmedQuestion}".`,
-        action:
-          'Try different words (e.g. the screen or feature name as it appears in the app), refresh the project map, or pick files manually with "Explain as Product".',
-      },
-      chat: [],
-      isAsking: false,
+    showError({
+      code: 'no-selection',
+      message: `No files in this project seem to match "${trimmedQuestion}".`,
+      action:
+        'Try different words (e.g. the screen or feature name as it appears in the app), refresh the project map, or pick files manually.',
     })
     return
   }
 
+  const rootPath = workspaceFolder.uri.fsPath
   const proposal: ScopeProposal = {
     question: trimmedQuestion,
-    strong: result.strong.map(({ path: filePath, reason, tier }) => ({
-      path: filePath,
-      reason,
-      tier,
-    })),
-    possible: result.possible.map(({ path: filePath, reason, tier }) => ({
-      path: filePath,
-      reason,
-      tier,
-    })),
+    strong: await withSizes(rootPath, result.strong),
+    possible: await withSizes(rootPath, result.possible),
     totalMatches: result.totalMatches,
   }
 
@@ -89,14 +76,19 @@ export async function runAskProduct(services: AppServices, question?: string): P
 
   const autoScope = readSettings().autoScope
   if (autoScope && !proposal.broad && proposal.strong.length > 0) {
-    await confirmScope(
+    await confirmScope({
       services,
-      trimmedQuestion,
-      proposal.strong.map((file) => file.path),
-    )
+      question: trimmedQuestion,
+      relativePaths: proposal.strong.map((file) => file.path),
+      target,
+    })
     return
   }
 
+  if (target === 'add') {
+    panel.update({ addArea: { status: 'scope', scope: proposal }, question: trimmedQuestion })
+    return
+  }
   panel.replaceState({
     status: 'scope',
     question: trimmedQuestion,
@@ -106,12 +98,19 @@ export async function runAskProduct(services: AppServices, question?: string): P
   })
 }
 
-export async function confirmScope(
-  services: AppServices,
-  question: string,
-  relativePaths: string[],
-  rememberAutoScope?: boolean,
-): Promise<void> {
+export async function confirmScope({
+  services,
+  question,
+  relativePaths,
+  rememberAutoScope,
+  target,
+}: {
+  services: AppServices
+  question: string
+  relativePaths: string[]
+  rememberAutoScope?: boolean
+  target: ScanTarget
+}): Promise<void> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
   if (!workspaceFolder) return
   if (rememberAutoScope)
@@ -124,5 +123,18 @@ export async function confirmScope(
     return absolute ? [absolute] : []
   })
   if (absolutePaths.length === 0) return
-  await runAnalysis(services, absolutePaths, question)
+  await runAnalysis(services, absolutePaths, question, { target })
+}
+
+// File sizes let the panel show the scan's estimated cost before anything is sent.
+async function withSizes(
+  rootPath: string,
+  files: { path: string; reason: string; tier: 'strong' | 'possible' }[],
+): Promise<ProposedFile[]> {
+  return Promise.all(
+    files.map(async ({ path: relativePath, reason, tier }) => {
+      const stat = await fs.stat(path.resolve(rootPath, relativePath)).catch(() => undefined)
+      return { path: relativePath, reason, tier, size: stat?.size ?? 0 }
+    }),
+  )
 }

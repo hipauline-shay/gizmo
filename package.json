@@ -2,7 +2,7 @@
   "name": "gizmo",
   "displayName": "Gizmo by Celestial Works",
   "description": "Gizmo checks what you built with AI, sums it up in plain words, and helps you share it with your team.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "publisher": "celestialworks",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -68,6 +68,10 @@
         "title": "Gizmo: Explain as Product"
       },
       {
+        "command": "gizmo.addToReport",
+        "title": "Gizmo: Add to Report"
+      },
+      {
         "command": "gizmo.openPanel",
         "title": "Gizmo: Open Panel"
       },
@@ -105,6 +109,10 @@
         {
           "command": "gizmo.explainAsProduct",
           "group": "z_gizmo@1"
+        },
+        {
+          "command": "gizmo.addToReport",
+          "group": "z_gizmo@2"
         }
       ]
     },
@@ -118,16 +126,17 @@
         },
         "gizmo.maxFiles": {
           "type": "number",
-          "default": 12,
+          "default": 6,
           "minimum": 1,
-          "maximum": 40,
-          "description": "Maximum number of files included in a single analysis."
+          "maximum": 8,
+          "description": "Maximum number of files in one scan (one area). Add more areas instead of raising this."
         },
         "gizmo.maxContextSize": {
           "type": "number",
-          "default": 160000,
+          "default": 60000,
           "minimum": 10000,
-          "description": "Maximum total characters of source code sent to the AI provider."
+          "maximum": 80000,
+          "description": "Maximum characters of source code in one scan (one area). Add more areas instead of raising this."
         },
         "gizmo.includeRelatedImports": {
           "type": "boolean",

@@ -1,22 +1,20 @@
-import type { WebviewToExtensionMessage } from '../shared/messages'
+import type { ScanTarget, WebviewToExtensionMessage } from '../shared/messages'
 import type { Evidence } from '../analysis/schemas'
 
 export interface MessageHandlers {
   onReady(): void
-  onChooseFile(): void
-  onRefresh(): void
+  onChooseFile(target: ScanTarget): void
+  onRefresh(areaId?: string): void
   onClear(): void
   onExport(): void
   onExportTickets(): void
   onAsk(question: string, label?: string): void
-  onAskProduct(question: string): void
-  onConfirmScope(files: string[], autoScope: boolean): void
-  onCancelScope(): void
+  onAskProduct(question: string, target: ScanTarget): void
+  onConfirmScope(files: string[], autoScope: boolean, target: ScanTarget): void
+  onCancelScope(target: ScanTarget): void
   onRefreshMap(): void
-  onAddRelated(files: string[]): void
-  onDismissRelated(): void
   onScanProduct(): void
-  onCompareSpec(spec: string): void
+  onCompareSpec(spec: string, areaId?: string): void
   onOpenEvidence(evidence: Evidence): void
   onCopy(text: string): void
   onOpenEmail(subject: string, body: string): void
@@ -31,10 +29,10 @@ export function routeMessage(message: unknown, handlers: MessageHandlers): void 
       handlers.onReady()
       return
     case 'chooseFile':
-      handlers.onChooseFile()
+      handlers.onChooseFile(message.target ?? 'new')
       return
     case 'refresh':
-      handlers.onRefresh()
+      handlers.onRefresh(message.areaId)
       return
     case 'clear':
       handlers.onClear()
@@ -49,28 +47,25 @@ export function routeMessage(message: unknown, handlers: MessageHandlers): void 
       if (message.question.trim().length > 0) handlers.onAsk(message.question.trim(), message.label)
       return
     case 'askProduct':
-      if (message.question.trim().length > 0) handlers.onAskProduct(message.question.trim())
+      if (message.question.trim().length > 0)
+        handlers.onAskProduct(message.question.trim(), message.target ?? 'new')
       return
     case 'confirmScope':
-      if (message.files.length > 0) handlers.onConfirmScope(message.files, message.autoScope)
+      if (message.files.length > 0)
+        handlers.onConfirmScope(message.files, message.autoScope, message.target ?? 'new')
       return
     case 'cancelScope':
-      handlers.onCancelScope()
+      handlers.onCancelScope(message.target ?? 'new')
       return
     case 'refreshMap':
       handlers.onRefreshMap()
-      return
-    case 'addRelated':
-      if (message.files.length > 0) handlers.onAddRelated(message.files)
-      return
-    case 'dismissRelated':
-      handlers.onDismissRelated()
       return
     case 'scanProduct':
       handlers.onScanProduct()
       return
     case 'compareSpec':
-      if (message.spec.trim().length > 0) handlers.onCompareSpec(message.spec.trim())
+      if (message.spec.trim().length > 0)
+        handlers.onCompareSpec(message.spec.trim(), message.areaId)
       return
     case 'openEvidence':
       handlers.onOpenEvidence(message.evidence)
@@ -99,29 +94,41 @@ function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
       typeof record.question === 'string' &&
       (record.label === undefined || typeof record.label === 'string')
     )
-  if (record.type === 'askProduct') return typeof record.question === 'string'
-  if (record.type === 'compareSpec') return typeof record.spec === 'string'
+  if (record.type === 'askProduct')
+    return typeof record.question === 'string' && isOptionalTarget(record.target)
+  if (record.type === 'compareSpec')
+    return typeof record.spec === 'string' && isOptionalString(record.areaId)
   if (record.type === 'confirmScope')
-    return isStringArray(record.files) && typeof record.autoScope === 'boolean'
-  if (record.type === 'addRelated') return isStringArray(record.files)
+    return (
+      isStringArray(record.files) &&
+      typeof record.autoScope === 'boolean' &&
+      isOptionalTarget(record.target)
+    )
+  if (record.type === 'chooseFile' || record.type === 'cancelScope')
+    return isOptionalTarget(record.target)
+  if (record.type === 'refresh') return isOptionalString(record.areaId)
   if (record.type === 'openEvidence') return isEvidence(record.evidence)
   if (record.type === 'copy') return typeof record.text === 'string'
   if (record.type === 'openEmail')
     return typeof record.subject === 'string' && typeof record.body === 'string'
   return [
     'ready',
-    'chooseFile',
-    'refresh',
     'clear',
     'export',
     'exportTickets',
-    'cancelScope',
     'refreshMap',
-    'dismissRelated',
     'scanProduct',
     'addApiKey',
     'openAnthropicConsole',
   ].includes(record.type)
+}
+
+function isOptionalTarget(value: unknown): boolean {
+  return value === undefined || value === 'new' || value === 'add'
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === 'string'
 }
 
 function isStringArray(value: unknown): value is string[] {

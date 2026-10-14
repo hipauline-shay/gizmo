@@ -15,7 +15,8 @@ export interface FixItem {
   requestedFor?: ItemSource
 }
 
-export function buildFixList(analysis: ProductAnalysis): FixItem[] {
+// Ids are prefixed with the area so two areas never share an item's done/dismissed status.
+export function buildFixList(analysis: ProductAnalysis, areaId: string): FixItem[] {
   const sources: { level: FixLevel; kind: string; findings: Finding[] }[] = [
     {
       level: 1,
@@ -33,7 +34,7 @@ export function buildFixList(analysis: ProductAnalysis): FixItem[] {
 
   const items = sources.flatMap(({ level, kind, findings }, sourceIndex) =>
     findings.map((finding, index) => ({
-      id: stableAiId(kind, finding, sourceIndex, index),
+      id: `${areaId}:${stableAiId(kind, finding, sourceIndex, index)}`,
       level,
       kind,
       text: finding.text,

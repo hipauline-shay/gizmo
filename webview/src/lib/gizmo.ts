@@ -1,5 +1,5 @@
 import type { FixItem, FixStatus } from './build-fix-list'
-import type { ProductAnalysis } from '../types/panel'
+import type { CombinedSummary, ProductAnalysis } from '../types/panel'
 
 export type GizmoMood = 'sleeping' | 'thinking' | 'alert' | 'happy'
 
@@ -33,55 +33,78 @@ export function gizmoGreeting({
   counts: ItemCounts
 }): string {
   const scope = fileCount ? `${featureName} (${plural(fileCount, 'file')})` : featureName
-  const opener = `I checked ${scope}.`
-  const { blocking, alsoToFix } = counts
-
-  if (blocking > 0) {
-    const rest = alsoToFix > 0 ? `, plus ${plural(alsoToFix, 'smaller thing')} to tidy up` : ''
-    return `${opener} ${plural(blocking, 'thing')} will block your launch${rest}. Want to see the blockers?`
-  }
-  if (alsoToFix > 0)
-    return `${opener} Nothing is blocking your launch. ${plural(alsoToFix, 'smaller thing')} ${alsoToFix === 1 ? 'is' : 'are'} left to tidy up.`
-  return `${opener} Everything on the list is done. Nice work, this is ready to share with your team.`
+  return `I checked ${scope}. ${outcome(counts, 'the blockers')}`
 }
 
-export function buildShareSummary({
-  analysis,
-  items,
-  statusOf,
-}: {
+function outcome({ blocking, alsoToFix }: ItemCounts, blockersLabel: string): string {
+  if (blocking > 0) {
+    const rest = alsoToFix > 0 ? `, plus ${plural(alsoToFix, 'smaller thing')} to tidy up` : ''
+    return `${plural(blocking, 'thing')} will block your launch${rest}. Want to see ${blockersLabel}?`
+  }
+  if (alsoToFix > 0)
+    return `Nothing is blocking your launch. ${plural(alsoToFix, 'smaller thing')} ${alsoToFix === 1 ? 'is' : 'are'} left to tidy up.`
+  return 'Everything on the list is done. Nice work, this is ready to share with your team.'
+}
+
+function listLabels(labels: string[]): string {
+  if (labels.length <= 1) return labels.join('')
+  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
+}
+
+export interface ShareArea {
+  label: string
   analysis: ProductAnalysis
   items: FixItem[]
+}
+
+// The plain-text update people paste into Slack or email. With several areas, every
+// blocker and fix is prefixed with its area so the team knows where it lives.
+export function buildShareSummary({
+  areas,
+  combined,
+  statusOf,
+}: {
+  areas: ShareArea[]
+  combined?: CombinedSummary
   statusOf: (id: string) => FixStatus
 }): string {
-  const open = items.filter((item) => statusOf(item.id) === 'open')
-  const blockers = open.filter((item) => item.level === 1)
-  const toFix = open.filter((item) => item.level !== 1)
-  const working = analysis.whatsWorking.slice(0, 3)
-  const next = analysis.nextSteps.slice(0, 3)
-  const stakeholder = analysis.perspectives.stakeholder
+  const [first] = areas
+  if (!first) return ''
+  const isSingleArea = areas.length === 1
+  const withArea = (label: string, text: string): string =>
+    isSingleArea ? text : `${label}: ${text}`
+  const open = areas.flatMap(({ label, items }) =>
+    items.filter((item) => statusOf(item.id) === 'open').map((item) => ({ label, item })),
+  )
+  const blockers = open.filter(({ item }) => item.level === 1)
+  const toFix = open.filter(({ item }) => item.level !== 1)
+  const working = areas.flatMap(({ label, analysis }) =>
+    analysis.whatsWorking
+      .slice(0, isSingleArea ? 3 : 1)
+      .map((finding) => withArea(label, finding.text)),
+  )
+  const next = (combined?.nextSteps ?? first.analysis.nextSteps).slice(0, 3)
   const status =
     blockers.length === 0
       ? 'Ready to ship: nothing is blocking'
       : `Not ready yet: ${plural(blockers.length, 'thing')} ${blockers.length === 1 ? 'blocks' : 'block'} the launch`
+  const firstSummary =
+    first.analysis.perspectives.stakeholder.launchSummary || first.analysis.summary
 
   return [
-    `Update: ${analysis.featureName}`,
+    `Update: ${areas.map((area) => area.label).join(', ')}`,
     `Status: ${status}`,
     '',
-    stakeholder.launchSummary || analysis.summary,
+    combined?.summary ?? firstSummary,
     section(
       'Blocking',
-      blockers.map((item) => item.text),
+      blockers.map(({ label, item }) => withArea(label, item.text)),
     ),
     section(
       'Still to fix',
-      toFix.slice(0, 5).map((item) => item.text),
+      toFix.slice(0, 5).map(({ label, item }) => withArea(label, item.text)),
     ),
-    section(
-      'Working',
-      working.map((finding) => finding.text),
-    ),
+    section('Working', working),
     section(
       'Next',
       next.map((step) => step.title),
@@ -90,6 +113,20 @@ export function buildShareSummary({
     .filter((line) => line !== null)
     .join('\n')
 }
+
+export function reportGreeting({
+  areaLabels,
+  counts,
+}: {
+  areaLabels: string[]
+  counts: ItemCounts
+}): string {
+  const opener = `I checked ${plural(areaLabels.length, 'area')}: ${listLabels(areaLabels)}.`
+  return `${opener} ${outcome(counts, 'the blockers')}`
+}
+
+export const ADD_AREA_GREETING =
+  'Pick another area to add. I scan it on its own, give it its own tab, and combine it into your Summary.'
 
 export function bossReplyPrompt({ message, audience }: BossReplyInput): string {
   return [

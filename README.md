@@ -14,7 +14,13 @@ If you build with AI coding tools and also carry the designer, PM, or founder ha
 
 Gizmo is a friendly block dragon who reads the screen or feature you point him at and tells you, in one line, where you stand. Then he gives you the details only if you want them.
 
-**Check: is what I built correct and complete?**
+**One area at a time, one tab each**
+
+- Gizmo scans one screen or feature at a time (an "area"), so each scan stays fast, cheap, and reliable.
+- Want more? **+ Add area** scans the next one and gives it its own tab. Up to 4 areas per report.
+- Everything you add is combined into one **Summary** for your team.
+
+**Check (each area's tab): is what I built correct and complete?**
 
 - A verdict up top: what blocks a launch, what's also worth fixing, and what's verified working.
 - Open items you can check off, push to later, or dismiss as "not an issue." Every item links to the exact file and lines.
@@ -22,7 +28,7 @@ Gizmo is a friendly block dragon who reads the screen or feature you point him a
 
 **Summary: what do I tell my team?**
 
-- "Can we ship?" in plain language, what's blocking release, and recommended priorities.
+- "Can we ship?" across every area, in plain language, what's blocking release in each area, and recommended priorities.
 - A ready-to-paste team update. One button copies it, or opens it in email. It reads as your own words.
 
 **Ask Gizmo**
@@ -37,14 +43,14 @@ Every claim is marked Confirmed (visible in the code), Likely (a reasonable infe
 
 1. Install Gizmo from the Marketplace, then open a JavaScript or TypeScript project (React, Next.js, React Native, Node).
 2. Open the panel (Command Palette → **Gizmo: Open Panel**). Gizmo walks you through adding an Anthropic API key: create one at [console.anthropic.com](https://console.anthropic.com/settings/keys), add a little credit, paste it in. The key stays on your computer.
-3. Ask about a screen or feature, or right-click a file or folder → **Gizmo: Explain as Product**.
+3. Ask about a screen or feature, or right-click a file or folder → **Gizmo: Explain as Product**. To add another area later, use **+ Add area** in the panel or right-click → **Gizmo: Add to Report**.
 
-Gizmo is free. Each scan or question uses your own Anthropic credit, usually cents, not dollars, and the panel shows the estimated cost after every run.
+Gizmo is free. Each scan or question uses your own Anthropic credit: usually well under a dollar per area and cents per question. Gizmo shows the estimated cost before a scan and the actual cost after it, and never retries on its own.
 
 ## Good to know
 
 - Works with JavaScript and TypeScript projects. Other languages are on the list for later.
-- Each analysis covers one selected file or folder plus a little related code, capped at 12 files by default. Gizmo tells you what was excluded or truncated.
+- One area is up to 6 files and about 60,000 characters of code. If you pick more, Gizmo asks you to pick fewer before anything is sent, so you are never charged for a scan that is too big.
 - Open items and chat live in the panel for the current analysis. Rescan keeps what you've checked off or dismissed.
 
 ## Privacy and safety

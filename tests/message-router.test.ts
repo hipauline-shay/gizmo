@@ -14,8 +14,6 @@ function createHandlers(): MessageHandlers {
     onConfirmScope: vi.fn(),
     onCancelScope: vi.fn(),
     onRefreshMap: vi.fn(),
-    onAddRelated: vi.fn(),
-    onDismissRelated: vi.fn(),
     onScanProduct: vi.fn(),
     onCompareSpec: vi.fn(),
     onOpenEvidence: vi.fn(),
@@ -84,7 +82,9 @@ describe('routeMessage', () => {
   it('routes spec comparison messages with trimmed specs', () => {
     const handlers = createHandlers()
     routeMessage({ type: 'compareSpec', spec: ' Users can log in. ' }, handlers)
-    expect(handlers.onCompareSpec).toHaveBeenCalledWith('Users can log in.')
+    expect(handlers.onCompareSpec).toHaveBeenCalledWith('Users can log in.', undefined)
+    routeMessage({ type: 'compareSpec', spec: 'x', areaId: 'area-2' }, handlers)
+    expect(handlers.onCompareSpec).toHaveBeenLastCalledWith('x', 'area-2')
   })
 
   it('routes ticket export messages', () => {
@@ -96,11 +96,34 @@ describe('routeMessage', () => {
   it('routes product questions and scope confirmations', () => {
     const handlers = createHandlers()
     routeMessage({ type: 'askProduct', question: ' What is the camera flow? ' }, handlers)
-    expect(handlers.onAskProduct).toHaveBeenCalledWith('What is the camera flow?')
+    expect(handlers.onAskProduct).toHaveBeenCalledWith('What is the camera flow?', 'new')
     routeMessage({ type: 'confirmScope', files: ['a.tsx'], autoScope: true }, handlers)
-    expect(handlers.onConfirmScope).toHaveBeenCalledWith(['a.tsx'], true)
-    routeMessage({ type: 'addRelated', files: ['b.tsx'] }, handlers)
-    expect(handlers.onAddRelated).toHaveBeenCalledWith(['b.tsx'])
+    expect(handlers.onConfirmScope).toHaveBeenCalledWith(['a.tsx'], true, 'new')
+  })
+
+  it('routes "+ Add area" messages to the add target', () => {
+    const handlers = createHandlers()
+    routeMessage({ type: 'askProduct', question: 'settings', target: 'add' }, handlers)
+    expect(handlers.onAskProduct).toHaveBeenCalledWith('settings', 'add')
+    routeMessage(
+      { type: 'confirmScope', files: ['s.tsx'], autoScope: false, target: 'add' },
+      handlers,
+    )
+    expect(handlers.onConfirmScope).toHaveBeenCalledWith(['s.tsx'], false, 'add')
+    routeMessage({ type: 'chooseFile', target: 'add' }, handlers)
+    expect(handlers.onChooseFile).toHaveBeenCalledWith('add')
+    routeMessage({ type: 'cancelScope', target: 'add' }, handlers)
+    expect(handlers.onCancelScope).toHaveBeenCalledWith('add')
+    routeMessage({ type: 'refresh', areaId: 'area-1' }, handlers)
+    expect(handlers.onRefresh).toHaveBeenCalledWith('area-1')
+  })
+
+  it('rejects an unknown scan target', () => {
+    const handlers = createHandlers()
+    routeMessage({ type: 'askProduct', question: 'x', target: 'replace' }, handlers)
+    routeMessage({ type: 'chooseFile', target: 3 }, handlers)
+    expect(handlers.onAskProduct).not.toHaveBeenCalled()
+    expect(handlers.onChooseFile).not.toHaveBeenCalled()
   })
 
   it('rejects malformed scope payloads', () => {

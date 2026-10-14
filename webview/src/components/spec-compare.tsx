@@ -7,6 +7,7 @@ interface SpecCompareProps {
   reqs: ReqItem[]
   changes: ChangeItem[]
   isComparing: boolean
+  areaId: string
   onAddRequirement: (text: string) => void
   onToggleLater: (id: string) => void
   onRemoveRequirement: (id: string) => void
@@ -38,6 +39,7 @@ export const SpecCompare = ({
   reqs,
   changes,
   isComparing,
+  areaId,
   onAddRequirement,
   onToggleLater,
   onRemoveRequirement,
@@ -71,7 +73,7 @@ export const SpecCompare = ({
   const runCompare = () => {
     const activeReqs = reqs.filter((r) => !r.deferred)
     if (activeReqs.length === 0 || isComparing) return
-    postMessage({ type: 'compareSpec', spec: activeReqs.map((r) => r.text).join('\n') })
+    postMessage({ type: 'compareSpec', spec: activeReqs.map((r) => r.text).join('\n'), areaId })
   }
 
   const visibleChanges = showAllChanges ? changes : changes.slice(0, CHANGES_PAGE)

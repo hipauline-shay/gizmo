@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { postMessage } from '../hooks/use-vscode'
 import { MapStatusLine } from './map-status'
-import type { MapStatus, ScopeProposal } from '../types/panel'
+import { estimateScanCostUsd, formatCostUsd } from '../../../src/shared/format-cost'
+import { defaultLimits } from '../../../src/utilities/limits'
+import type { MapStatus, ScanTarget, ScopeProposal } from '../types/panel'
 
 interface ScopeReviewProps {
   scope: ScopeProposal
   mapStatus?: MapStatus
+  target?: ScanTarget
 }
 
-export const ScopeReview = ({ scope, mapStatus }: ScopeReviewProps) => {
+export const ScopeReview = ({ scope, mapStatus, target = 'new' }: ScopeReviewProps) => {
   const [reviewing, setReviewing] = useState(false)
   const [remember, setRemember] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(
@@ -25,19 +28,25 @@ export const ScopeReview = ({ scope, mapStatus }: ScopeReviewProps) => {
   }
 
   const analyze = (files: string[]) => {
-    if (files.length === 0) return
-    postMessage({ type: 'confirmScope', files, autoScope: remember })
+    if (files.length === 0 || files.length > defaultLimits.maxFiles) return
+    postMessage({ type: 'confirmScope', files, autoScope: remember, target })
   }
 
+  const cancel = () => postMessage({ type: 'cancelScope', target })
   const total = scope.strong.length + scope.possible.length
+  const strongPaths = scope.strong.map((file) => file.path)
+  const pickedPaths = reviewing ? [...selected] : strongPaths
+  const isTooMany = pickedPaths.length > defaultLimits.maxFiles
+  const costLabel = (paths: string[]): string =>
+    formatCostUsd(estimateScanCostUsd(Math.min(sizeOf(scope, paths), defaultLimits.maxTotalChars)))
 
   if (scope.broad) {
     return (
       <div className="centered-state scope-screen">
         <h1 className="empty-title">“{scope.question}”</h1>
         <p className="empty-copy">
-          This question touches {scope.broad.total} files. Gizmo can analyze it in smaller sections
-          for better accuracy.
+          This touches {scope.broad.total} files, too many for one scan. Pick one area to start. You
+          can add the others afterwards with “+ Add area”, and they are combined in your Summary.
         </p>
         <div className="section-choices">
           {scope.broad.sections.map((section) => (
@@ -52,18 +61,10 @@ export const ScopeReview = ({ scope, mapStatus }: ScopeReviewProps) => {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className="ghost-button"
-          onClick={() => analyze(scope.strong.map((file) => file.path))}
-        >
-          Analyze the {scope.strong.length} strongest matches instead
+        <button type="button" className="ghost-button" onClick={() => analyze(strongPaths)}>
+          Scan the {scope.strong.length} best matches instead · {costLabel(strongPaths)}
         </button>
-        <button
-          type="button"
-          className="details-link"
-          onClick={() => postMessage({ type: 'cancelScope' })}
-        >
+        <button type="button" className="details-link" onClick={cancel}>
           Cancel
         </button>
       </div>
@@ -130,24 +131,27 @@ export const ScopeReview = ({ scope, mapStatus }: ScopeReviewProps) => {
         </div>
       )}
 
+      {isTooMany && (
+        <p className="scope-limit" role="alert">
+          Pick up to {defaultLimits.maxFiles} files for one scan. Untick{' '}
+          {pickedPaths.length - defaultLimits.maxFiles}, or add the rest later as another area.
+        </p>
+      )}
       <div className="scope-actions">
         <button
           type="button"
           className="primary-button"
-          onClick={() => analyze(reviewing ? [...selected] : scope.strong.map((file) => file.path))}
+          disabled={isTooMany || pickedPaths.length === 0}
+          onClick={() => analyze(pickedPaths)}
         >
-          Analyze this flow
+          Scan this area · {costLabel(pickedPaths)}
         </button>
         {!reviewing && (
           <button type="button" className="ghost-button" onClick={() => setReviewing(true)}>
             Review files
           </button>
         )}
-        <button
-          type="button"
-          className="details-link"
-          onClick={() => postMessage({ type: 'cancelScope' })}
-        >
+        <button type="button" className="details-link" onClick={cancel}>
           Cancel
         </button>
       </div>
@@ -168,4 +172,9 @@ export const ScopeReview = ({ scope, mapStatus }: ScopeReviewProps) => {
       </p>
     </div>
   )
+}
+
+function sizeOf(scope: ScopeProposal, paths: string[]): number {
+  const sizes = new Map([...scope.strong, ...scope.possible].map((file) => [file.path, file.size]))
+  return paths.reduce((total, path) => total + (sizes.get(path) ?? 0), 0)
 }

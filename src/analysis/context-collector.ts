@@ -73,6 +73,7 @@ export async function collectContext({
 
   const files: CollectedFile[] = []
   const truncatedFiles: string[] = []
+  const skippedSelectedFiles: string[] = []
   const seen = new Set<string>()
   let totalChars = 0
   let maskedSecrets = 0
@@ -84,6 +85,7 @@ export async function collectContext({
     if (seen.has(filePath)) return undefined
     if (files.length >= limits.maxFiles || totalChars >= limits.maxTotalChars) {
       excludedFiles.push(toRelative(rootPath, filePath))
+      if (reason === 'selected') skippedSelectedFiles.push(toRelative(rootPath, filePath))
       return undefined
     }
     seen.add(filePath)
@@ -161,6 +163,7 @@ export async function collectContext({
     excludedFiles: dedupe(excludedFiles),
     truncatedFiles: dedupe(truncatedFiles),
     totalChars,
+    skippedSelectedFiles,
   }
 }
 

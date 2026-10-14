@@ -5,15 +5,13 @@ import type { PrivacyConsentService } from './services/privacy-consent-service'
 import type { Logger } from './services/logger'
 import type { ProjectMapService } from './services/project-map-service'
 import type { GizmoPanel } from './panel/gizmo-panel'
-import type { AnalysisResult } from './analysis/types'
-import type { GapAnalysis } from './analysis/schemas'
+import type { ReportArea } from './analysis/types'
+import type { CombinedSummary, GapAnalysis } from './analysis/schemas'
 
-export interface CurrentAnalysis {
-  result?: AnalysisResult
-  selectionPath?: string
-  selectionPaths?: string[]
-  flowQuestion?: string
-  specComparison?: GapAnalysis
+export interface CurrentReport {
+  areas: ReportArea[]
+  combined?: CombinedSummary
+  specComparisons: Record<string, GapAnalysis>
 }
 
 export interface AppServices {
@@ -24,5 +22,5 @@ export interface AppServices {
   provider: AIProvider
   mapService: ProjectMapService
   getPanel(): GizmoPanel
-  current: CurrentAnalysis
+  current: CurrentReport
 }

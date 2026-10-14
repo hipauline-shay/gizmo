@@ -15,24 +15,6 @@ export const confidenceSchema = lenientEnum(['confirmed', 'likely', 'unclear', '
 
 const evidenceList = lenientList(evidenceSchema)
 
-export const primaryActionSchema = z.object({
-  label: z.string(),
-  behavior: lenientText(),
-  evidence: evidenceList,
-})
-
-export const userFlowStepSchema = z.object({
-  step: z
-    .preprocess(
-      (value) => (typeof value === 'string' ? Number.parseInt(value, 10) : value),
-      z.number().int(),
-    )
-    .catch(0),
-  title: z.string(),
-  description: lenientText(),
-  confidence: confidenceSchema,
-})
-
 export const uxStateSchema = z.object({
   name: z.string(),
   status: lenientEnum(['implemented', 'partial', 'missing', 'unclear'], 'unclear'),
@@ -49,15 +31,11 @@ export const findingSchema = z.object({
 const findingList = lenientList(findingSchema)
 
 export const designerPerspectiveSchema = z.object({
-  painPoints: findingList,
   designSystem: findingList,
 })
 
 export const pmPerspectiveSchema = z.object({
-  valueProposition: lenientText(),
-  sellingPoints: findingList,
   mvpMustFix: findingList,
-  analytics: findingList,
 })
 
 export const stakeholderPerspectiveSchema = z.object({
@@ -85,31 +63,22 @@ export const productAnalysisSchema = z.object({
   featureName: z.string(),
   summary: z.string(),
   confidence: lenientEnum(['high', 'medium', 'low'], 'medium'),
-  completionStatus: lenientEnum(
-    ['complete', 'mostly-complete', 'in-progress', 'not-started'],
-    'in-progress',
-  ),
-  riskLevel: lenientEnum(['low', 'medium', 'high'], 'medium'),
   whatsWorking: findingList,
-  evidenceSummary: lenientText(),
-  userGoal: lenientText(),
-  primaryActions: lenientList(primaryActionSchema),
-  userFlow: lenientList(userFlowStepSchema),
   states: lenientList(uxStateSchema),
-  businessRules: findingList,
-  permissions: findingList,
-  dataDependencies: findingList,
-  externalServices: findingList,
-  components: findingList,
   risks: findingList,
   uxConcerns: findingList,
   missingStates: findingList,
   openQuestions: findingList,
-  acceptanceCriteria: findingList,
-  changeImpact: findingList,
   technicalNotes: findingList,
   nextSteps: lenientList(nextStepSchema),
   perspectives: lenientObject(perspectivesSchema),
+})
+
+// The cross-area summary Gizmo writes after a second area is added (findings only, no code).
+export const combinedSummarySchema = z.object({
+  summary: z.string(),
+  launchGoal: lenientText(),
+  nextSteps: lenientList(nextStepSchema),
 })
 
 export const gapItemSchema = z.object({
@@ -165,10 +134,9 @@ export type NextStep = z.infer<typeof nextStepSchema>
 export type Perspectives = z.infer<typeof perspectivesSchema>
 export type GapItem = z.infer<typeof gapItemSchema>
 export type GapAnalysis = z.infer<typeof gapAnalysisSchema>
+export type CombinedSummary = z.infer<typeof combinedSummarySchema>
 export type ProductAnalysis = z.infer<typeof productAnalysisSchema>
 export type Evidence = z.infer<typeof evidenceSchema>
-export type PrimaryAction = z.infer<typeof primaryActionSchema>
-export type UserFlowStep = z.infer<typeof userFlowStepSchema>
 export type UxState = z.infer<typeof uxStateSchema>
 export type Finding = z.infer<typeof findingSchema>
 export type Confidence = z.infer<typeof confidenceSchema>

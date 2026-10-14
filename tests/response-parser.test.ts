@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   extractJson,
   parseAnalysisResponse,
+  parseCombinedSummaryResponse,
   quoteBareValues,
 } from '../src/analysis/response-parser'
 import { GizmoError } from '../src/utilities/errors'
@@ -46,7 +47,7 @@ describe('parseAnalysisResponse', () => {
   it('parses a valid JSON response', () => {
     const analysis = parseAnalysisResponse(validResponse)
     expect(analysis.featureName).toBe('Account Settings')
-    expect(analysis.primaryActions[0]?.evidence[0]?.startLine).toBe(10)
+    expect(analysis.states[0]?.name).toBe('Loading')
   })
 
   it('parses JSON wrapped in a markdown fence', () => {
@@ -102,7 +103,6 @@ describe('parseAnalysisResponse', () => {
     })
     const analysis = parseAnalysisResponse(messy)
     expect(analysis.confidence).toBe('high')
-    expect(analysis.completionStatus).toBe('in-progress')
     expect(analysis.risks).toEqual([])
     expect(analysis.states).toEqual([
       { name: 'Loading', status: 'implemented', description: '', evidence: [] },
@@ -118,8 +118,8 @@ describe('parseAnalysisResponse', () => {
   it('reads an answer with an unquoted step number like 4a (the camera-flow failure)', () => {
     const broken = `{"featureName":"Camera","summary":"Snap to identify.","confidence":"high","userFlow":[{"step":4,"title":"Open camera","description":"","confidence":"confirmed"},{"step":4a,"title":"Take a photo","description":"","confidence":"confirmed"}]}`
     const analysis = parseAnalysisResponse(broken)
-    expect(analysis.userFlow.map((step) => step.step)).toEqual([4, 4])
-    expect(analysis.userFlow[1]?.title).toBe('Take a photo')
+    expect(analysis.featureName).toBe('Camera')
+    expect(analysis.summary).toBe('Snap to identify.')
   })
 
   it('rejects non-JSON responses', () => {
@@ -156,5 +156,16 @@ describe('quoteBareValues', () => {
     const json = '{"text":"step 4a: tap \\"Save\\" now, ratio 16x9","n":1}'
     expect(quoteBareValues(json)).toBe(json)
     expect(JSON.parse(quoteBareValues(json))).toEqual(JSON.parse(json))
+  })
+})
+
+describe('parseCombinedSummaryResponse', () => {
+  it('reads the cross-area summary and defaults what is missing', () => {
+    const summary = parseCombinedSummaryResponse(
+      '{"summary":"Camera and settings are built.","nextSteps":[{"title":"Fix the privacy bug","userImpact":"High"}]}',
+    )
+    expect(summary.summary).toBe('Camera and settings are built.')
+    expect(summary.launchGoal).toBe('')
+    expect(summary.nextSteps[0]).toMatchObject({ title: 'Fix the privacy bug', userImpact: 'high' })
   })
 })

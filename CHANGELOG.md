@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5 — 2026-10-14
+
+- **Scan by area.** Gizmo now scans one screen or feature at a time, and each one gets its own tab. **+ Add area** scans the next one (up to 4 per report), and the **Summary** tab combines them all: one "Can we ship?", blockers per area, and one team update.
+- **Smaller, more reliable scans.** One area is up to 6 files and about 60,000 characters, and Gizmo asks only for what the panel shows. Answers are about half as long: faster, cheaper, and far less likely to fail.
+- **No surprise charges.** Gizmo shows the estimated cost before a scan, blocks a selection that is too big before anything is sent, and never retries on its own.
+- Right-click a file → **Gizmo: Add to Report** adds it as a new area.
+- Questions, boss replies, Export brief, and Jira tickets now cover every area in the report.
+
 ## 1.0.4 — 2026-10-14
 
 - Fixed: scanning a flow with branching steps (like the camera flow) could fail with "The AI response could not be understood". Claude sometimes numbered a branch "4a", which made the whole answer unreadable. Gizmo now asks for whole step numbers and repairs a stray value like this instead of failing.

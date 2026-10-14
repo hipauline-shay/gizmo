@@ -86,7 +86,10 @@ describe('buildShareSummary', () => {
   } as unknown as ProductAnalysis // only the fields the summary reads
 
   it('lists blockers, other open items, what works and next steps in plain bullets', () => {
-    const text = buildShareSummary({ analysis, items, statusOf: statusFrom({}) })
+    const text = buildShareSummary({
+      areas: [{ label: 'Capture screen', analysis, items }],
+      statusOf: statusFrom({}),
+    })
     expect(text).toContain('Update: Capture screen')
     expect(text).toContain('Status: Not ready yet: 1 thing blocks the launch')
     expect(text).toContain('Core flow works end to end.')
@@ -100,13 +103,32 @@ describe('buildShareSummary', () => {
 
   it('drops empty sections and reports ready when nothing blocks', () => {
     const text = buildShareSummary({
-      analysis,
-      items,
+      areas: [{ label: 'Capture screen', analysis, items }],
       statusOf: statusFrom({ a: 'done', b: 'done', c: 'done' }),
     })
     expect(text).toContain('Status: Ready to ship: nothing is blocking')
     expect(text).not.toContain('Blocking:')
     expect(text).not.toContain('Still to fix:')
+  })
+
+  it('names the area on every line and uses the combined summary for several areas', () => {
+    const settings = {
+      ...analysis,
+      featureName: 'Settings',
+      whatsWorking: [{ text: 'Profile edits save', confidence: 'confirmed', evidence: [] }],
+    } as unknown as ProductAnalysis // only the fields the summary reads
+    const text = buildShareSummary({
+      areas: [
+        { label: 'Capture', analysis, items },
+        { label: 'Settings', analysis: settings, items: [] },
+      ],
+      combined: { summary: 'Both areas mostly work.', launchGoal: '', nextSteps: [] },
+      statusOf: statusFrom({}),
+    })
+    expect(text).toContain('Update: Capture, Settings')
+    expect(text).toContain('Both areas mostly work.')
+    expect(text).toContain('Blocking:\n- Capture: Upload is blank')
+    expect(text).toContain('- Settings: Profile edits save')
   })
 })
 
@@ -180,10 +202,11 @@ describe('buildFixList', () => {
       risks: [],
       openQuestions: [],
     } as unknown as ProductAnalysis // only the fields buildFixList reads
-    const items = buildFixList(analysis)
+    const items = buildFixList(analysis, 'camera')
     expect(items.map((item) => [item.level, item.text])).toEqual([
       [1, 'Upload is blank'],
       [2, 'No empty state'],
     ])
+    expect(items.every((item) => item.id.startsWith('camera:'))).toBe(true)
   })
 })

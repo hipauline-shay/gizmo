@@ -1,4 +1,5 @@
 import { GizmoPose } from './gizmo-pose'
+import { formatCostUsd } from '../../../src/shared/format-cost'
 
 const steps = [
   'Reading your files',
@@ -7,9 +8,19 @@ const steps = [
   'Writing my notes for you',
 ]
 
-export const LoadingState = ({ step }: { step: number }) => (
-  <div className="centered-state" role="status" aria-live="polite">
-    <GizmoPose mood="thinking" size={120} className="gizmo-thinking-bob" />
+interface LoadingStateProps {
+  step: number
+  estimateUsd?: number
+  isInline?: boolean
+}
+
+export const LoadingState = ({ step, estimateUsd, isInline = false }: LoadingStateProps) => (
+  <div
+    className={isInline ? 'centered-state centered-state-inline' : 'centered-state'}
+    role="status"
+    aria-live="polite"
+  >
+    <GizmoPose mood="thinking" size={isInline ? 88 : 120} className="gizmo-thinking-bob" />
     <h1 className="empty-title">Gizmo is on it…</h1>
     <ol className="loading-steps">
       {steps.map((label, index) => {
@@ -27,5 +38,8 @@ export const LoadingState = ({ step }: { step: number }) => (
         )
       })}
     </ol>
+    {estimateUsd !== undefined && (
+      <p className="muted">This scan costs {formatCostUsd(estimateUsd)} on your own key.</p>
+    )}
   </div>
 )

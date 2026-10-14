@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { estimateCostUsd } from '../src/providers/pricing'
-import { formatCostUsd } from '../src/shared/format-cost'
+import { estimateScanCostUsd, formatCostUsd } from '../src/shared/format-cost'
 
 describe('estimateCostUsd', () => {
   it('prices Opus 5.5 at $4 in / $20 out per million tokens', () => {
@@ -35,5 +35,13 @@ describe('formatCostUsd', () => {
     expect(formatCostUsd(0.01)).toBe('about $0.01')
     expect(formatCostUsd(0.256)).toBe('about $0.26')
     expect(formatCostUsd(1.5)).toBe('about $1.50')
+  })
+})
+
+describe('estimateScanCostUsd', () => {
+  it('matches what a real full-size area scan cost (about $0.31 to $0.35)', () => {
+    const estimate = estimateScanCostUsd(60000)
+    expect(estimate).toBeGreaterThanOrEqual(0.31)
+    expect(estimate).toBeLessThanOrEqual(0.36)
   })
 })

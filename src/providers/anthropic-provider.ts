@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { AIProvider } from './ai-provider'
+import type { AIProvider, Priced } from './ai-provider'
 import type { AnalysisContext, FollowUpAnswer } from '../analysis/types'
 import type { CombinedSummary, GapAnalysis, ProductAnalysis } from '../analysis/schemas'
 import {
@@ -35,19 +35,21 @@ export class AnthropicProvider implements AIProvider {
 
   constructor(private readonly options: AnthropicProviderOptions) {}
 
-  async analyze(context: AnalysisContext): Promise<ProductAnalysis> {
-    const text = await this.complete(buildAnalysisPrompt(context))
-    return parseAnalysisResponse(text)
+  async analyze(context: AnalysisContext): Promise<Priced<ProductAnalysis>> {
+    const { text, costUsd } = await this.complete(buildAnalysisPrompt(context))
+    return { result: parseAnalysisResponse(text), costUsd }
   }
 
   async askFollowUp(areas: PromptArea[], question: string): Promise<FollowUpAnswer> {
-    const text = await this.complete(buildFollowUpPrompt({ areas, question }))
+    const { text } = await this.complete(buildFollowUpPrompt({ areas, question }))
     return { answer: text.trim() }
   }
 
-  async summarizeAreas(areas: Pick<PromptArea, 'label' | 'analysis'>[]): Promise<CombinedSummary> {
-    const text = await this.complete(buildCombinedSummaryPrompt(areas))
-    return parseCombinedSummaryResponse(text)
+  async summarizeAreas(
+    areas: Pick<PromptArea, 'label' | 'analysis'>[],
+  ): Promise<Priced<CombinedSummary>> {
+    const { text, costUsd } = await this.complete(buildCombinedSummaryPrompt(areas))
+    return { result: parseCombinedSummaryResponse(text), costUsd }
   }
 
   async compareToSpec(
@@ -55,11 +57,11 @@ export class AnthropicProvider implements AIProvider {
     analysis: ProductAnalysis,
     spec: string,
   ): Promise<GapAnalysis> {
-    const text = await this.complete(buildSpecComparisonPrompt(context, analysis, spec))
+    const { text } = await this.complete(buildSpecComparisonPrompt(context, analysis, spec))
     return parseGapAnalysisResponse(text)
   }
 
-  private async complete(userPrompt: string): Promise<string> {
+  private async complete(userPrompt: string): Promise<{ text: string; costUsd?: number }> {
     const apiKey = await this.options.getApiKey()
     if (!apiKey) throw knownError('api-key-missing')
 
@@ -103,7 +105,7 @@ export class AnthropicProvider implements AIProvider {
         .map((block) => block.text)
         .join('\n')
       if (text.trim().length === 0) throw knownError('invalid-response', 'The response was empty.')
-      return text
+      return { text, costUsd }
     } catch (error) {
       throw this.mapError(error)
     }

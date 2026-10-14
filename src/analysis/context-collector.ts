@@ -42,6 +42,18 @@ export async function collectContext({
   const singleFileSelection = inputPaths.length === 1
 
   for (const inputPath of inputPaths) {
+    // Picked by hand or not, a file outside the project or listed in .gitignore is never sent.
+    const blockedReason = !isInsideRoot(rootPath, inputPath)
+      ? 'Gizmo only reads files inside the open project.'
+      : gitignore?.isIgnored(toRelative(rootPath, inputPath))
+        ? 'This is listed in .gitignore, so Gizmo never sends it.'
+        : undefined
+    if (blockedReason) {
+      if (singleFileSelection) throw knownError('unsupported-file', blockedReason)
+      excludedFiles.push(toRelative(rootPath, inputPath))
+      continue
+    }
+
     const stat = await fs.stat(inputPath).catch(() => {
       throw knownError('no-selection')
     })

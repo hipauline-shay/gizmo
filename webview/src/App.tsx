@@ -250,6 +250,8 @@ export const App = () => {
         ? spendLabel('Combining the areas cost', state.combinedCostUsd)
         : spendLabel('This area cost', firstArea.meta.costUsd)
   const trustNote = [
+    activeArea?.meta.changedDuringScan &&
+      'A file changed while Gizmo read it, so a few line numbers may be off',
     tabSpend,
     state.cost && `${formatCostUsd(state.cost.totalUsd)} this session, on your own API key`,
     secretCheckLabel(activeArea ? (activeArea.meta.maskedSecrets ?? 0) : maskedSecrets),
@@ -408,6 +410,7 @@ export const App = () => {
             areaCount={areas.length}
             estimateUsd={state.estimateUsd}
             suggestions={state.areaSuggestions}
+            canScanRecent={!areas.some((area) => area.source === 'recent')}
           />
         )}
 

@@ -12,6 +12,7 @@ import type { AppServices } from './app-services'
 import {
   areaSuggestionsFor,
   findArea,
+  guardScan,
   openEvidence,
   runAnalysis,
   runChooseFiles,
@@ -51,11 +52,14 @@ export function activate(context: vscode.ExtensionContext): void {
     mapService,
     getPanel: () => GizmoPanel.getOrCreate(context.extensionUri, panelHandlers),
     current: { areas: [], specComparisons: {} },
+    scan: { isBusy: false },
   }
 
   mapService.onStatusChange((mapStatus) => {
     GizmoPanel.instance?.update({ mapStatus, areaSuggestions: areaSuggestionsFor(services) })
   })
+
+  const scan = (task: () => Promise<void>): void => void guardScan(services, task)
 
   const panelHandlers: MessageHandlers = {
     onReady: () => {
@@ -68,21 +72,27 @@ export function activate(context: vscode.ExtensionContext): void {
         .getApiKey()
         .then((key) => panel.update({ hasApiKey: key !== undefined }))
     },
-    onChooseFile: (target) => void runChooseFiles(services, target),
+    onChooseFile: (target) => scan(() => runChooseFiles(services, target)),
     onRefresh: (areaId) => {
       const area = findArea(services, areaId)
-      if (!area) return void runChooseFiles(services, 'new')
-      void runAnalysis(services, area.selectionPaths, area.flowQuestion, { areaId: area.id })
+      if (!area) return
+      if (area.source === 'recent') return scan(() => runScanRecent(services, 'add', area.id))
+      scan(() => runAnalysis(services, area.selectionPaths, area.flowQuestion, { areaId: area.id }))
+    },
+    onRetry: () => {
+      const request = services.scan.lastRequest
+      if (!request) return scan(() => runChooseFiles(services, 'new'))
+      scan(() => runAnalysis(services, request.paths, request.flowQuestion, request))
     },
     onClear: () => runClearAnalysis(services),
     onExport: () => void runExportBrief(services),
     onExportTickets: () => void runExportTickets(services),
     onAsk: (question, label) => void runAskAboutSelection(services, question, label),
-    onAskProduct: (question, target) => void runAskProduct(services, question, target),
-    onScanRecent: (target) => void runScanRecent(services, target),
+    onAskProduct: (question, target) => scan(() => runAskProduct(services, question, target)),
+    onScanRecent: (target) => scan(() => runScanRecent(services, target)),
     onResetAddArea: () => services.getPanel().update({ addArea: undefined }),
     onRefreshMap: () => void mapService.refresh(),
-    onScanProduct: () => void runScanProduct(services),
+    onScanProduct: () => scan(() => runScanProduct(services)),
     onCompareSpec: (spec, areaId) => void runCompareSpec(services, spec, areaId),
     onOpenEvidence: (evidence) => void openEvidence(services, evidence),
     onCopy: (text) => void vscode.env.clipboard.writeText(text),
@@ -100,19 +110,26 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     logger,
     mapService,
-    vscode.commands.registerCommand('gizmo.askProduct', () => runAskProduct(services)),
+    vscode.commands.registerCommand('gizmo.askProduct', () =>
+      guardScan(services, () => runAskProduct(services)),
+    ),
     vscode.commands.registerCommand(
       'gizmo.explainAsProduct',
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => runExplainAsProduct(services, uri, uris),
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
+        guardScan(services, () => runExplainAsProduct(services, uri, uris)),
     ),
     vscode.commands.registerCommand('gizmo.addToReport', (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
-      runExplainAsProduct(services, uri, uris, services.current.areas.length > 0 ? 'add' : 'new'),
+      guardScan(services, () =>
+        runExplainAsProduct(services, uri, uris, services.current.areas.length > 0 ? 'add' : 'new'),
+      ),
     ),
     vscode.commands.registerCommand('gizmo.analyzeFlow', (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
-      runAnalyzeFlow(services, uri, uris),
+      guardScan(services, () => runAnalyzeFlow(services, uri, uris)),
     ),
     vscode.commands.registerCommand('gizmo.refreshProjectMap', () => mapService.refresh()),
-    vscode.commands.registerCommand('gizmo.scanProduct', () => runScanProduct(services)),
+    vscode.commands.registerCommand('gizmo.scanProduct', () =>
+      guardScan(services, () => runScanProduct(services)),
+    ),
     vscode.commands.registerCommand('gizmo.openPanel', () => runOpenPanel(services)),
     vscode.commands.registerCommand('gizmo.askAboutSelection', () =>
       runAskAboutSelection(services),

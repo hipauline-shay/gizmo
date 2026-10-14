@@ -209,4 +209,25 @@ describe('buildFixList', () => {
     ])
     expect(items.every((item) => item.id.startsWith('camera:'))).toBe(true)
   })
+
+  it('gives two findings on the same line different ids', () => {
+    const sameLine = { file: 'a.tsx', startLine: 10, endLine: 12 }
+    const analysis = {
+      perspectives: {
+        stakeholder: { launchBlockers: [] },
+        pm: { mvpMustFix: [] },
+        designer: { designSystem: [] },
+      },
+      missingStates: [],
+      uxConcerns: [
+        { text: 'Button too small', confidence: 'confirmed', evidence: [sameLine] },
+        { text: 'Label unclear', confidence: 'confirmed', evidence: [sameLine] },
+      ],
+      technicalNotes: [],
+      risks: [],
+      openQuestions: [],
+    } as unknown as ProductAnalysis // only the fields buildFixList reads
+    const ids = buildFixList(analysis, 'camera').map((item) => item.id)
+    expect(new Set(ids).size).toBe(2)
+  })
 })

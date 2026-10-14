@@ -9,9 +9,16 @@ interface AddAreaTabProps {
   areaCount: number
   estimateUsd?: number
   suggestions?: string[]
+  canScanRecent: boolean
 }
 
-export const AddAreaTab = ({ addArea, areaCount, estimateUsd, suggestions }: AddAreaTabProps) => {
+export const AddAreaTab = ({
+  addArea,
+  areaCount,
+  estimateUsd,
+  suggestions,
+  canScanRecent,
+}: AddAreaTabProps) => {
   const remaining = maxReportAreas - areaCount
 
   if (addArea?.status === 'loading' && !addArea.areaId)
@@ -29,7 +36,7 @@ export const AddAreaTab = ({ addArea, areaCount, estimateUsd, suggestions }: Add
         <strong>combines it into your current Summary</strong>. Small scans stay fast, cheap and
         reliable.
       </p>
-      <AreaPicker target="add" suggestions={suggestions} />
+      <AreaPicker target="add" suggestions={suggestions} canScanRecent={canScanRecent} />
       <p className="add-area-count">
         {remaining === 1
           ? 'You can add 1 more area to this report.'

@@ -66,7 +66,7 @@ Before the first analysis it shows this notice and asks you to confirm:
 
 **What leaves your computer, and where it goes**
 
-- Only the files you pick (or that Gizmo proposes and you confirm), plus a limited amount of code they import, go to Anthropic's API, and only when you run a scan, a question, or a spec comparison.
+- Only the files you pick, or the files Gizmo matches to the screen, feature, or chip you choose (for "What I changed this week": your most recently changed source files, up to one scan's worth), plus a limited amount of code they import, go to Anthropic's API, and only when you run a scan, a question, or a spec comparison.
 - A whole-product scan also sends a local inventory of your project: file names, folder structure, and screen or component names. Never the source of files that aren't selected.
 - Requests go only to `api.anthropic.com`, over your own API key. Gizmo ignores proxy or token environment variables, so nothing can quietly reroute it. If Anthropic's safety filter declines a request, it may retry on another Anthropic model; it never goes to a third party.
 - Your use of the API is covered by [Anthropic's terms and privacy policy](https://www.anthropic.com/legal/privacy), not by Gizmo.

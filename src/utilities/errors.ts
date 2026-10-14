@@ -11,7 +11,6 @@ export type GizmoErrorCode =
   | 'too-many-areas'
   | 'invalid-response'
   | 'network'
-  | 'file-changed'
   | 'refused'
   | 'no-credit'
   | 'busy'
@@ -99,11 +98,6 @@ const errorCatalog: Record<GizmoErrorCode, ErrorInfo> = {
     code: 'network',
     message: 'Could not reach the AI provider.',
     action: 'Check your internet connection and try again.',
-  },
-  'file-changed': {
-    code: 'file-changed',
-    message: 'The selected file changed while it was being analyzed.',
-    action: 'Run the analysis again to pick up the latest version.',
   },
   'no-credit': {
     code: 'no-credit',

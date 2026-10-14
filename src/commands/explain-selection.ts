@@ -45,25 +45,20 @@ export interface RunAnalysisOptions {
   // Rescans this area in place instead of starting a report or adding an area.
   areaId?: string
   productInventory?: string
+  source?: 'recent'
 }
 
 export async function runAnalysis(
   services: AppServices,
   selectionPaths: string[],
   flowQuestion?: string,
-  { target = 'new', areaId, productInventory }: RunAnalysisOptions = {},
+  { target = 'new', areaId, productInventory, source }: RunAnalysisOptions = {},
 ): Promise<void> {
   const panel = services.getPanel()
   panel.reveal()
   const report = services.current
   const rescanned = areaId ? report.areas.find((area) => area.id === areaId) : undefined
   const keepsReport = target === 'add' || rescanned !== undefined
-  if (keepsReport && panel.getState().addArea?.status === 'loading') {
-    void vscode.window.showInformationMessage(
-      'Gizmo is already scanning an area. Try again when it finishes.',
-    )
-    return
-  }
 
   const showStep = (loadingStep: 1 | 2 | 3 | 4, estimateUsd?: number): void => {
     if (keepsReport)
@@ -78,16 +73,28 @@ export async function runAnalysis(
     if (target === 'add' && !rescanned && report.areas.length >= maxReportAreas)
       throw knownError('too-many-areas')
 
+    if (!rescanned)
+      services.scan.lastRequest = {
+        paths: selectionPaths,
+        flowQuestion,
+        target,
+        productInventory,
+        source,
+      }
     const consented = await services.consentService.ensureConsent()
     if (!consented) {
+      services.scan.lastRequest = undefined
       if (keepsReport) panel.update({ addArea: undefined })
       return
     }
     const settings = readSettings()
 
-    if (!keepsReport)
+    if (!keepsReport) {
       panel.replaceState({ status: 'loading', loadingStep: 1, chat: [], isAsking: false })
-    else showStep(1)
+      report.areas = []
+      report.combined = undefined
+      report.specComparisons = {}
+    } else showStep(1)
 
     const firstPath = selectionPaths[0]
     const selectionMtime = firstPath ? await mtimeOf(firstPath) : undefined
@@ -110,13 +117,12 @@ export async function runAnalysis(
     if (productInventory) context.productInventory = productInventory
 
     showStep(3, estimateScanCostUsd(context.totalChars))
-    const spentBefore = sessionSpend(services)
-    const analysis = await services.provider.analyze(context)
-    const costUsd = sessionSpend(services) - spentBefore
+    const { result: analysis, costUsd } = await services.provider.analyze(context)
 
+    // The answer is already paid for, so a save during the scan only adds a note.
     const mtimeAfter = firstPath ? await mtimeOf(firstPath) : undefined
-    if (selectionMtime !== undefined && mtimeAfter !== undefined && mtimeAfter !== selectionMtime)
-      throw knownError('file-changed')
+    const changedDuringScan =
+      selectionMtime !== undefined && mtimeAfter !== undefined && mtimeAfter !== selectionMtime
 
     showStep(4)
     const meta: AnalysisMeta = {
@@ -127,6 +133,7 @@ export async function runAnalysis(
       maskedSecrets: context.maskedSecrets ?? 0,
       model: settings.model,
       costUsd,
+      changedDuringScan,
     }
     const area: ReportArea = {
       id: rescanned?.id ?? randomUUID(),
@@ -136,6 +143,7 @@ export async function runAnalysis(
       context,
       selectionPaths,
       flowQuestion,
+      source: source ?? rescanned?.source,
     }
     services.logger.info(
       `analysis complete: files=${meta.includedFiles} excluded=${meta.excludedFiles} truncated=${meta.truncatedFiles} areas=${keepsReport ? report.areas.length + (rescanned ? 0 : 1) : 1}`,
@@ -155,6 +163,7 @@ export async function runAnalysis(
       isAsking: false,
       focusArea: { id: area.id, nonce: Date.now() },
     })
+    services.scan.lastRequest = undefined
     if (report.areas.length > 1) await refreshCombinedSummary(services)
   } catch (error) {
     const info = toErrorInfo(error)
@@ -167,11 +176,14 @@ export async function runAnalysis(
     } else if (keepsReport)
       panel.update({ addArea: { status: 'error', error: info }, estimateUsd: undefined })
     else panel.replaceState({ status: 'error', error: info, chat: [], isAsking: false })
-    if (info.code === 'api-key-missing') {
-      const choice = await vscode.window.showWarningMessage(info.message, 'Configure AI Provider')
-      if (choice === 'Configure AI Provider')
-        await vscode.commands.executeCommand('gizmo.configureProvider')
-    }
+    // Not awaited: an unanswered notification must not keep the one-scan lock on.
+    if (info.code === 'api-key-missing')
+      void vscode.window
+        .showWarningMessage(info.message, 'Configure AI Provider')
+        .then((choice) => {
+          if (choice === 'Configure AI Provider')
+            void vscode.commands.executeCommand('gizmo.configureProvider')
+        })
   }
 }
 
@@ -186,9 +198,11 @@ export async function refreshCombinedSummary(services: AppServices): Promise<voi
     return
   }
   panel.update({ isCombining: true })
-  const spentBefore = sessionSpend(services)
+  let combinedCostUsd: number | undefined
   try {
-    report.combined = await services.provider.summarizeAreas(report.areas)
+    const priced = await services.provider.summarizeAreas(report.areas)
+    report.combined = priced.result
+    combinedCostUsd = priced.costUsd
     services.logger.info(`combined summary complete: areas=${report.areas.length}`)
   } catch (error) {
     report.combined = undefined
@@ -196,13 +210,25 @@ export async function refreshCombinedSummary(services: AppServices): Promise<voi
   }
   panel.update({
     combined: report.combined,
-    combinedCostUsd: sessionSpend(services) - spentBefore,
+    combinedCostUsd,
     isCombining: false,
   })
 }
 
-function sessionSpend(services: AppServices): number {
-  return services.getPanel().getState().cost?.totalUsd ?? 0
+// Runs one scan at a time across Gizmo, from any button, chip, or command.
+export async function guardScan(services: AppServices, task: () => Promise<void>): Promise<void> {
+  if (services.scan.isBusy) {
+    void vscode.window.showInformationMessage(
+      'Gizmo is already scanning. Try again when it finishes.',
+    )
+    return
+  }
+  services.scan.isBusy = true
+  try {
+    await task()
+  } finally {
+    services.scan.isBusy = false
+  }
 }
 
 export function reportState(
@@ -238,13 +264,14 @@ export function showScanError(services: AppServices, target: ScanTarget, error: 
   else panel.replaceState({ status: 'error', error, chat: [], isAsking: false })
 }
 
+// Only an exact id matches: falling back to another area would rescan or charge the wrong one.
 export function findArea(services: AppServices, areaId?: string): ReportArea | undefined {
-  const { areas } = services.current
-  return areas.find((area) => area.id === areaId) ?? areas[0]
+  if (!areaId) return undefined
+  return services.current.areas.find((area) => area.id === areaId)
 }
 
-function toAreaView({ id, label, analysis, meta }: ReportArea): AreaView {
-  return { id, label, analysis, meta }
+function toAreaView({ id, label, analysis, meta, source }: ReportArea): AreaView {
+  return { id, label, analysis, meta, source }
 }
 
 export async function resolveSelectionPaths(

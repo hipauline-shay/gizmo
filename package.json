@@ -2,7 +2,7 @@
   "name": "gizmo",
   "displayName": "Gizmo by Celestial Works",
   "description": "Gizmo checks what you built with AI, sums it up in plain words, and helps you share it with your team.",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "publisher": "celestialworks",
   "license": "MIT",
   "icon": "media/icon.png",

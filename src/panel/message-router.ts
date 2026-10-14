@@ -12,6 +12,7 @@ export interface MessageHandlers {
   onAskProduct(question: string, target: ScanTarget): void
   onScanRecent(target: ScanTarget): void
   onResetAddArea(): void
+  onRetry(): void
   onRefreshMap(): void
   onScanProduct(): void
   onCompareSpec(spec: string, areaId?: string): void
@@ -55,6 +56,9 @@ export function routeMessage(message: unknown, handlers: MessageHandlers): void 
       return
     case 'resetAddArea':
       handlers.onResetAddArea()
+      return
+    case 'retry':
+      handlers.onRetry()
       return
     case 'refreshMap':
       handlers.onRefreshMap()
@@ -111,6 +115,7 @@ function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
     'exportTickets',
     'refreshMap',
     'resetAddArea',
+    'retry',
     'scanProduct',
     'addApiKey',
     'openAnthropicConsole',

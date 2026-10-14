@@ -17,6 +17,7 @@ export interface AreaView {
   label: string
   analysis: ProductAnalysis
   meta: AnalysisMeta
+  source?: 'recent'
 }
 
 // The "+ Add area" tab's own progress, so the existing area tabs stay visible while it runs.
@@ -64,6 +65,7 @@ export type WebviewToExtensionMessage =
   | { type: 'askProduct'; question: string; target?: ScanTarget }
   | { type: 'scanRecent'; target?: ScanTarget }
   | { type: 'resetAddArea' }
+  | { type: 'retry' }
   | { type: 'refreshMap' }
   | { type: 'scanProduct' }
   | { type: 'compareSpec'; spec: string; areaId?: string }

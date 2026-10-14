@@ -40,6 +40,8 @@ export interface AnalysisMeta {
   model: string
   // What this area's scan cost, so its tab can show its own price.
   costUsd?: number
+  // A picked file was saved while Gizmo read it, so a few line numbers may be off.
+  changedDuringScan?: boolean
 }
 
 // One scanned area of the report (e.g. "Camera"), shown as its own tab in the panel.
@@ -51,4 +53,6 @@ export interface ReportArea {
   context: AnalysisContext
   selectionPaths: string[]
   flowQuestion?: string
+  // "recent" marks the "What I changed this week" area, so its chip is not offered twice.
+  source?: 'recent'
 }

@@ -14,6 +14,8 @@ export async function runAskProduct(
   target: ScanTarget = 'new',
 ): Promise<void> {
   services.getPanel().reveal()
+  // Forget the previous scan, so "Try again" after a failed search never repeats an older one.
+  services.scan.lastRequest = undefined
 
   const asked =
     question ??

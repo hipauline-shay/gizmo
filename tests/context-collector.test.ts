@@ -75,6 +75,23 @@ describe('collectContext', () => {
     expect(context.skippedSelectedFiles).toEqual([])
   })
 
+  it('never sends a hand-picked file listed in .gitignore', async () => {
+    await write('.gitignore', 'private/\n')
+    await write('private/notes.ts', 'export const secretPlan = 1\n')
+    await expect(
+      collectContext({ rootPath: root, selectionPath: path.join(root, 'private/notes.ts') }),
+    ).rejects.toThrow(GizmoError)
+  })
+
+  it('never sends a hand-picked file outside the project', async () => {
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'gizmo-outside-'))
+    await fs.writeFile(path.join(outside, 'other.ts'), 'export const other = 1\n', 'utf8')
+    await expect(
+      collectContext({ rootPath: root, selectionPath: path.join(outside, 'other.ts') }),
+    ).rejects.toThrow(GizmoError)
+    await fs.rm(outside, { recursive: true, force: true })
+  })
+
   it('skips node_modules and build output', async () => {
     await write('node_modules/pkg/index.js', 'module.exports = {}\n')
     await write('dist/bundle.js', 'var x = 1\n')

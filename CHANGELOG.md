@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.8 — 2026-10-14
+
+- "What I changed this week" disappears once your report already has it, and Rescan on that tab picks the week's newest files again.
+- Gizmo runs one scan at a time, and the chips pause for a moment after a tap, so a double tap never starts two paid scans.
+- "Try again" repeats exactly the scan that failed.
+- If you save a file while Gizmo reads it, you keep the (already paid) answer with a note instead of an error.
+- Each area's cost is exact, even when you ask a question during a scan.
+- Files you pick by hand are now also never sent when they are outside the project or listed in .gitignore.
+
 ## 1.0.7 — 2026-10-14
 
 - **Type or tap, and Gizmo scans.** Ask about a screen or feature and Gizmo scans its best-matching files straight away. No more file list or "pick a section" step.

@@ -11,7 +11,8 @@ export async function runCompareSpec(
   const panel = services.getPanel()
   panel.reveal()
 
-  const current = findArea(services, areaId)
+  // The Command Palette has no tab, so it compares against the first area.
+  const current = areaId ? findArea(services, areaId) : services.current.areas[0]
   if (!current) {
     void vscode.window.showInformationMessage(
       'Run "Gizmo: Explain as Product" first, then compare the result to a spec.',

@@ -22,7 +22,7 @@ export const ErrorState = ({ error, target = 'new' }: ErrorStateProps) => {
         <button
           type="button"
           className="details-link"
-          onClick={() => postMessage(isAdding ? { type: 'resetAddArea' } : { type: 'refresh' })}
+          onClick={() => postMessage(isAdding ? { type: 'resetAddArea' } : { type: 'retry' })}
         >
           I added it, try again
         </button>
@@ -39,7 +39,7 @@ export const ErrorState = ({ error, target = 'new' }: ErrorStateProps) => {
         <button
           type="button"
           className="primary-button"
-          onClick={() => postMessage(isAdding ? { type: 'resetAddArea' } : { type: 'refresh' })}
+          onClick={() => postMessage(isAdding ? { type: 'resetAddArea' } : { type: 'retry' })}
         >
           {isAdding ? 'Pick another area' : 'Try again'}
         </button>

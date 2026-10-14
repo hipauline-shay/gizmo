@@ -13,6 +13,7 @@ function createHandlers(): MessageHandlers {
     onAskProduct: vi.fn(),
     onScanRecent: vi.fn(),
     onResetAddArea: vi.fn(),
+    onRetry: vi.fn(),
     onRefreshMap: vi.fn(),
     onScanProduct: vi.fn(),
     onCompareSpec: vi.fn(),
@@ -111,6 +112,13 @@ describe('routeMessage', () => {
     expect(handlers.onResetAddArea).toHaveBeenCalledOnce()
     routeMessage({ type: 'refresh', areaId: 'area-1' }, handlers)
     expect(handlers.onRefresh).toHaveBeenCalledWith('area-1')
+  })
+
+  it('routes "Try again" to repeat the failed scan', () => {
+    const handlers = createHandlers()
+    routeMessage({ type: 'retry' }, handlers)
+    expect(handlers.onRetry).toHaveBeenCalledOnce()
+    expect(handlers.onRefresh).not.toHaveBeenCalled()
   })
 
   it('starts a new report from "What I changed this week" by default', () => {

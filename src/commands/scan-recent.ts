@@ -8,6 +8,7 @@ import { fitToScan } from '../analysis/fit-to-scan'
 import { runAnalysis, showScanError } from './explain-selection'
 import type { AppServices } from '../app-services'
 import type { ScanTarget } from '../shared/messages'
+import type { ErrorInfo } from '../utilities/errors'
 import type { ContextLimits } from '../utilities/limits'
 
 const execFileAsync = promisify(execFile)
@@ -27,12 +28,25 @@ export function recentChangesQuestion({
   return `What I changed this week: review the code changed in the last ${RECENT_DAYS} days. Say what was built or changed, what works, and what is still missing.${coverage}`
 }
 
-// Scans the files changed in the last week, newest first, up to one area's worth.
-export async function runScanRecent(services: AppServices, target: ScanTarget): Promise<void> {
+// Scans the files changed in the last week, newest first, up to one area's worth. With an
+// areaId it refreshes that area, picking the week's files again rather than the old ones.
+export async function runScanRecent(
+  services: AppServices,
+  target: ScanTarget,
+  areaId?: string,
+): Promise<void> {
   services.getPanel().reveal()
+  if (!areaId) services.scan.lastRequest = undefined
+  const showError = (error: ErrorInfo): void => {
+    if (areaId)
+      void vscode.window.showWarningMessage(
+        `Gizmo could not rescan: ${error.message} ${error.action}`,
+      )
+    else showScanError(services, target, error)
+  }
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
   if (!workspaceFolder) {
-    showScanError(services, target, {
+    showError({
       code: 'no-workspace',
       message: 'No folder is open in this window.',
       action: 'Open a project folder, then try again.',
@@ -49,7 +63,7 @@ export async function runScanRecent(services: AppServices, target: ScanTarget): 
     limits: readSettings().limits,
   })
   if (recent.length === 0) {
-    showScanError(services, target, {
+    showError({
       code: 'no-selection',
       message: `No code changed in the last ${RECENT_DAYS} days.`,
       action: 'Pick a screen or feature instead, or choose files manually.',
@@ -62,7 +76,7 @@ export async function runScanRecent(services: AppServices, target: ScanTarget): 
     services,
     recent.map((relativePath) => path.resolve(rootPath, relativePath)),
     recentChangesQuestion({ scanned: recent.length, changed: changedCount }),
-    { target },
+    { target, areaId, source: 'recent' },
   )
 }
 

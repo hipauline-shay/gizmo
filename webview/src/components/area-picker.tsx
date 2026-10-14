@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { postMessage } from '../hooks/use-vscode'
 import { estimateScanCostUsd, formatCostUsd } from '../../../src/shared/format-cost'
 import { defaultLimits } from '../../../src/utilities/limits'
@@ -7,15 +7,31 @@ import type { ScanTarget } from '../types/panel'
 interface AreaPickerProps {
   target: ScanTarget
   suggestions?: string[]
+  // Hidden once the report already has a "What I changed this week" area.
+  canScanRecent?: boolean
 }
 
 // Type a screen or feature, or tap a chip, and Gizmo scans it straight away.
-export const AreaPicker = ({ target, suggestions = [] }: AreaPickerProps) => {
+export const AreaPicker = ({ target, suggestions = [], canScanRecent = true }: AreaPickerProps) => {
   const [question, setQuestion] = useState('')
+  const [isSending, setIsSending] = useState(false)
+
+  // A double tap sends one scan; the lock lifts on its own if Gizmo was already busy.
+  useEffect(() => {
+    if (!isSending) return
+    const timer = setTimeout(() => setIsSending(false), SEND_LOCK_MS)
+    return () => clearTimeout(timer)
+  }, [isSending])
+
+  const send = (message: Parameters<typeof postMessage>[0]) => {
+    if (isSending) return
+    setIsSending(true)
+    postMessage(message)
+  }
 
   const scan = (text: string) => {
     if (!text.trim()) return
-    postMessage({ type: 'askProduct', question: text.trim(), target })
+    send({ type: 'askProduct', question: text.trim(), target })
     setQuestion('')
   }
 
@@ -37,24 +53,28 @@ export const AreaPicker = ({ target, suggestions = [] }: AreaPickerProps) => {
           placeholder="Which screen or feature? e.g. the camera flow"
           onChange={(event) => setQuestion(event.target.value)}
         />
-        <button type="submit" className="primary-button" disabled={!question.trim()}>
+        <button type="submit" className="primary-button" disabled={!question.trim() || isSending}>
           Scan
         </button>
       </form>
       <div className="chat-suggestions" aria-label="Suggestions">
-        <button
-          type="button"
-          className="suggestion suggestion-recent"
-          onClick={() => postMessage({ type: 'scanRecent', target })}
-        >
-          What I changed this week
-        </button>
+        {canScanRecent && (
+          <button
+            type="button"
+            className="suggestion suggestion-recent"
+            disabled={isSending}
+            onClick={() => send({ type: 'scanRecent', target })}
+          >
+            What I changed this week
+          </button>
+        )}
         {suggestions.map((area) => (
           <button
             key={area}
             type="button"
             className="suggestion"
             aria-label={`Scan the ${area} area`}
+            disabled={isSending}
             onClick={() => scan(`the ${area} screens`)}
           >
             {capitalize(area)}
@@ -75,6 +95,8 @@ export const AreaPicker = ({ target, suggestions = [] }: AreaPickerProps) => {
     </div>
   )
 }
+
+const SEND_LOCK_MS = 1500
 
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ')

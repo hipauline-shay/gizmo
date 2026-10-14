@@ -42,7 +42,17 @@ export function buildFixList(analysis: ProductAnalysis, areaId: string): FixItem
       createdBy: 'ai' as const,
     })),
   )
-  return dedupeByText(items)
+  return uniqueIds(dedupeByText(items))
+}
+
+// Two different findings of one kind can cite the same line; a suffix keeps their ids apart.
+function uniqueIds(items: FixItem[]): FixItem[] {
+  const seen = new Map<string, number>()
+  return items.map((item) => {
+    const count = seen.get(item.id) ?? 0
+    seen.set(item.id, count + 1)
+    return count === 0 ? item : { ...item, id: `${item.id}#${count + 1}` }
+  })
 }
 
 // The AI often lists the same issue under several headings (e.g. as a launch blocker and

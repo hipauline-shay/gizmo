@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6 — 2026-10-14
+
+- **Read it to me** always reads the box it sits in: Gizmo's card reads Gizmo's note on every tab, and "Share with your team" has its own Read it to me for the team update.
+- The cost line now belongs to the tab you are on: what this area cost, what combining the areas cost, or nothing yet on "+ Add area", plus your session total.
+- When a search matches many files inside "+ Add area", the area choices now sit at the top of the tab instead of jumping to the middle.
+
 ## 1.0.5 — 2026-10-14
 
 - **Scan by area.** Gizmo now scans one screen or feature at a time, and each one gets its own tab. **+ Add area** scans the next one (up to 4 per report), and the **Summary** tab combines them all: one "Can we ship?", blockers per area, and one team update.

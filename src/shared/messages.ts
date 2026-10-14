@@ -52,6 +52,7 @@ export interface PanelState {
   // Asks the panel to open this area's tab (after a scan finishes); the nonce re-triggers it.
   focusArea?: { id: string; nonce: number }
   combined?: CombinedSummary
+  combinedCostUsd?: number
   isCombining?: boolean
   addArea?: AddAreaState
   estimateUsd?: number

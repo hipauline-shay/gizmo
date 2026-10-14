@@ -1966,6 +1966,7 @@ textarea:focus-visible {
 .share-card-actions,
 .boss-reply-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
 }
@@ -2105,6 +2106,13 @@ textarea:focus-visible {
 .centered-state-inline {
   min-height: 0;
   padding: 24px 0;
+}
+
+/* Inside the "+ Add area" tab the file picker sits at the top instead of centering on a full screen. */
+.scope-inline {
+  min-height: 0;
+  justify-content: flex-start;
+  padding: 8px 0 0;
 }
 
 .add-area {

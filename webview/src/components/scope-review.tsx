@@ -42,11 +42,19 @@ export const ScopeReview = ({ scope, mapStatus, target = 'new' }: ScopeReviewPro
 
   if (scope.broad) {
     return (
-      <div className="centered-state scope-screen">
+      <div
+        className={
+          target === 'add'
+            ? 'centered-state scope-screen scope-inline'
+            : 'centered-state scope-screen'
+        }
+      >
         <h1 className="empty-title">“{scope.question}”</h1>
         <p className="empty-copy">
-          This touches {scope.broad.total} files, too many for one scan. Pick one area to start. You
-          can add the others afterwards with “+ Add area”, and they are combined in your Summary.
+          This touches {scope.broad.total} files, too many for one scan.{' '}
+          {target === 'add'
+            ? 'Pick one area to add now. You can add another one right after.'
+            : 'Pick one area to start. You can add the others afterwards with “+ Add area”, and they are combined in your Summary.'}
         </p>
         <div className="section-choices">
           {scope.broad.sections.map((section) => (
@@ -72,7 +80,11 @@ export const ScopeReview = ({ scope, mapStatus, target = 'new' }: ScopeReviewPro
   }
 
   return (
-    <div className="scope-screen scope-panel">
+    <div
+      className={
+        target === 'add' ? 'scope-screen scope-panel scope-inline' : 'scope-screen scope-panel'
+      }
+    >
       <h1 className="scope-heading">
         I found {total} file{total === 1 ? '' : 's'} connected to this question.
       </h1>

@@ -38,6 +38,8 @@ export interface AnalysisMeta {
   excludedFiles: number
   truncatedFiles: number
   model: string
+  // What this area's scan cost, so its tab can show its own price.
+  costUsd?: number
 }
 
 // One scanned area of the report (e.g. "Camera"), shown as its own tab in the panel.

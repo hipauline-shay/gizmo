@@ -109,7 +109,9 @@ export async function runAnalysis(
     if (productInventory) context.productInventory = productInventory
 
     showStep(3, estimateScanCostUsd(context.totalChars))
+    const spentBefore = sessionSpend(services)
     const analysis = await services.provider.analyze(context)
+    const costUsd = sessionSpend(services) - spentBefore
 
     const mtimeAfter = firstPath ? await mtimeOf(firstPath) : undefined
     if (selectionMtime !== undefined && mtimeAfter !== undefined && mtimeAfter !== selectionMtime)
@@ -123,6 +125,7 @@ export async function runAnalysis(
       truncatedFiles: context.truncatedFiles.length,
       maskedSecrets: context.maskedSecrets ?? 0,
       model: settings.model,
+      costUsd,
     }
     const area: ReportArea = {
       id: rescanned?.id ?? randomUUID(),
@@ -182,6 +185,7 @@ export async function refreshCombinedSummary(services: AppServices): Promise<voi
     return
   }
   panel.update({ isCombining: true })
+  const spentBefore = sessionSpend(services)
   try {
     report.combined = await services.provider.summarizeAreas(report.areas)
     services.logger.info(`combined summary complete: areas=${report.areas.length}`)
@@ -189,7 +193,15 @@ export async function refreshCombinedSummary(services: AppServices): Promise<voi
     report.combined = undefined
     services.logger.error(`combined summary failed: ${toErrorInfo(error).code}`)
   }
-  panel.update({ combined: report.combined, isCombining: false })
+  panel.update({
+    combined: report.combined,
+    combinedCostUsd: sessionSpend(services) - spentBefore,
+    isCombining: false,
+  })
+}
+
+function sessionSpend(services: AppServices): number {
+  return services.getPanel().getState().cost?.totalUsd ?? 0
 }
 
 export function reportState(

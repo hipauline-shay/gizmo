@@ -239,10 +239,17 @@ export const App = () => {
         : reportGreeting({ areaLabels: areas.map((area) => area.label), counts: totalCounts })
 
   const maskedSecrets = areas.reduce((total, area) => total + (area.meta.maskedSecrets ?? 0), 0)
+  const tabSpend = activeArea
+    ? spendLabel('This area cost', activeArea.meta.costUsd)
+    : activeTab === ADD_TAB
+      ? 'Nothing spent in this tab yet'
+      : areas.length > 1
+        ? spendLabel('Combining the areas cost', state.combinedCostUsd)
+        : spendLabel('This area cost', firstArea.meta.costUsd)
   const trustNote = [
-    state.cost &&
-      `Last run cost ${formatCostUsd(state.cost.lastUsd)} · ${formatCostUsd(state.cost.totalUsd)} this session, on your own API key`,
-    secretCheckLabel(maskedSecrets),
+    tabSpend,
+    state.cost && `${formatCostUsd(state.cost.totalUsd)} this session, on your own API key`,
+    secretCheckLabel(activeArea ? (activeArea.meta.maskedSecrets ?? 0) : maskedSecrets),
   ]
     .filter((part): part is string => Boolean(part))
     .join(' · ')
@@ -320,7 +327,6 @@ export const App = () => {
         <GizmoCard
           mood={activeTab === ADD_TAB ? 'happy' : gizmoMood(tabCounts)}
           message={greeting}
-          readAloudText={activeTab === SUMMARY_TAB ? shareSummary : greeting}
           chips={chips}
           isCelebrating={isCelebrating}
           costNote={trustNote}
@@ -578,6 +584,10 @@ function countsLabel({ blocking, alsoToFix }: ItemCounts): string {
   return [blocking > 0 ? `${blocking} blocking` : '', alsoToFix > 0 ? `${alsoToFix} to fix` : '']
     .filter(Boolean)
     .join(' · ')
+}
+
+function spendLabel(prefix: string, usd?: number): string | undefined {
+  return usd === undefined ? undefined : `${prefix} ${formatCostUsd(usd)}`
 }
 
 function areaCountLabel(count: number): string {

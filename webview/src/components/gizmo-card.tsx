@@ -10,7 +10,6 @@ export interface GizmoChip {
 interface GizmoCardProps {
   mood: GizmoMood
   message: string
-  readAloudText?: string
   chips: GizmoChip[]
   isCelebrating?: boolean
   costNote?: string
@@ -19,7 +18,6 @@ interface GizmoCardProps {
 export const GizmoCard = ({
   mood,
   message,
-  readAloudText,
   chips,
   isCelebrating = false,
   costNote,
@@ -31,7 +29,7 @@ export const GizmoCard = ({
       stop()
       return
     }
-    speak(readAloudText ?? message)
+    speak(message)
   }
 
   return (

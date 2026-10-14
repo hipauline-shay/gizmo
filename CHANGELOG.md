@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.10 — 2026-10-14
+
+- The first-run key card shows the real price: about 35 cents to check one screen or feature, with the price shown before and after every scan.
+- Listed under the AI category.
+
 ## 1.0.9 — 2026-10-14
 
 - "What I changed this week" now looks like the other suggestions instead of being highlighted.

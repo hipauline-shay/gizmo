@@ -4,8 +4,9 @@ export const ApiKeySetup = () => (
   <section className="key-setup" aria-label="Set up your Anthropic API key">
     <h2 className="key-setup-title">First, give me a key (2 minutes)</h2>
     <p className="key-setup-copy">
-      Gizmo is free. I use Claude to read your code, so I run on your own Anthropic API key. A scan
-      costs cents, not dollars, and I show the cost after every run.
+      Gizmo is free. I use Claude to read your code, so I run on your own Anthropic API key.
+      Checking one screen or feature costs about 35 cents, and I show the price before and after
+      every scan.
     </p>
     <ol className="key-setup-steps">
       <li>

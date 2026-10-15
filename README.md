@@ -42,7 +42,7 @@ Every claim is marked Confirmed (visible in the code), Likely (a reasonable infe
 
 ## Getting started (about 2 minutes)
 
-1. Install Gizmo from the Marketplace, then open a JavaScript or TypeScript project (React, Next.js, React Native, Node).
+1. Install Gizmo from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=celestialworks.gizmo) (or [Open VSX](https://open-vsx.org/extension/celestialworks/gizmo) for Cursor), then open a JavaScript or TypeScript project (React, Next.js, React Native, Node).
 2. Open the panel (Command Palette → **Gizmo: Open Panel**). Gizmo walks you through adding an Anthropic API key: create one at [console.anthropic.com](https://console.anthropic.com/settings/keys), add a little credit, paste it in. The key stays on your computer.
 3. Ask about a screen or feature, or right-click a file or folder → **Gizmo: Explain as Product**. To add another area later, use **+ Add area** in the panel or right-click → **Gizmo: Add to Report**.
 

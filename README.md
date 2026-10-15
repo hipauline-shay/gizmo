@@ -5,9 +5,9 @@
 If you build with AI coding tools and also carry the designer, PM, or founder hat, you know the feeling: the code exists, but is it actually done? What's missing? What do I tell the team? Gizmo answers those three questions inside VS Code or Cursor, without you reading the code.
 
 <p align="center">
-  <img src="design/screenshots/3-welcome.jpg" width="260" alt="Gizmo's welcome screen: a sleeping block dragon asks which screen or feature to look at">
-  <img src="design/screenshots/1-check-tab.jpg" width="260" alt="The Check tab: Gizmo's one-line verdict, what blocks launch, and open items linked to the code">
-  <img src="design/screenshots/2-summary-share.jpg" width="260" alt="The Summary tab: can we ship, priorities, and a ready-to-paste team update">
+  <img src="design/screenshots/3-welcome.jpg" width="260" alt="Add area: type a screen or tap a project area chip, and Gizmo scans it and adds it to the Summary">
+  <img src="design/screenshots/1-check-tab.jpg" width="260" alt="An area tab: Gizmo's verdict, what blocks launch, and open items linked to the exact code">
+  <img src="design/screenshots/2-summary-share.jpg" width="260" alt="The Summary tab: can we ship across all areas, and what blocks release">
 </p>
 
 ## What Gizmo does

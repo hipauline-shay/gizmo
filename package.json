@@ -2,7 +2,7 @@
   "name": "gizmo",
   "displayName": "Gizmo by Celestial Works",
   "description": "Gizmo checks what you built with AI, sums it up in plain words, and helps you share it with your team.",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "publisher": "celestialworks",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -29,7 +29,7 @@
     "release readiness"
   ],
   "author": "Pauline Shay (Celestial Works)",
-  "homepage": "https://hipauline.com",
+  "homepage": "https://www.celestial-works.com/gizmo",
   "repository": {
     "type": "git",
     "url": "https://github.com/hipauline-shay/gizmo.git"

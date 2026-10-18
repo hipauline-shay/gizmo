@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.11 — 2026-10-17
+
+- Store listing now links to Gizmo's page on celestial-works.com. No changes to how Gizmo works.
+
 ## 1.0.10 — 2026-10-14
 
 - The first-run key card shows the real price: about 35 cents to check one screen or feature, with the price shown before and after every scan.

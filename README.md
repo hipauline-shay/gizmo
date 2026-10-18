@@ -129,6 +129,6 @@ Ideas on the list, in rough order: replies from your boss arriving straight from
 
 Gizmo is made by Pauline Shay, a product designer who builds with AI, under Celestial Works. It started as a question she kept asking herself while wearing the designer, PM, and engineer hats at once: "Is this actually done, and how do I tell everyone?"
 
-Portfolio: [hipauline.com](https://hipauline.com) · LinkedIn: [linkedin.com/in/hipauline](https://www.linkedin.com/in/hipauline)
+Celestial Works: [celestial-works.com/gizmo](https://www.celestial-works.com/gizmo) · Portfolio: [hipauline.com](https://hipauline.com) · LinkedIn: [linkedin.com/in/hipauline](https://www.linkedin.com/in/hipauline)
 
 Source code: [github.com/hipauline-shay/gizmo](https://github.com/hipauline-shay/gizmo). MIT License.

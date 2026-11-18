@@ -46,7 +46,7 @@ Every claim is marked Confirmed (visible in the code), Likely (a reasonable infe
 2. Open the panel (Command Palette → **Gizmo: Open Panel**). Gizmo walks you through adding an API key from Anthropic (Claude) or OpenAI: create one at [console.anthropic.com](https://console.anthropic.com/settings/keys) or [platform.openai.com](https://platform.openai.com/api-keys), add a little credit, paste it in. Gizmo tells which company the key is from, and the key stays on your computer.
 3. Ask about a screen or feature, or right-click a file or folder → **Gizmo: Explain as Product**. To add another area later, use **+ Add area** in the panel or right-click → **Gizmo: Add to Report**.
 
-Gizmo is free. Each scan or question uses your own Anthropic or OpenAI credit: usually well under a dollar per area and cents per question. Gizmo shows the estimated cost before a scan and the actual cost after it, and never retries on its own.
+Gizmo is free. Each scan or question uses your own Anthropic or OpenAI credit: checking one screen or feature costs about 35 cents with Claude or about 20 cents with OpenAI (GPT-6.1 Sol, about half the price), and a question costs cents. Gizmo shows the estimated cost before a scan and the actual cost after it, and never re-sends a failed scan on its own, so you are never charged twice.
 
 ## Good to know
 
@@ -62,13 +62,13 @@ The short version: **everything Gizmo analyzes goes to the AI company whose key 
 
 Before the first analysis with each company it shows this notice (naming that company) and asks you to confirm:
 
-> Gizmo sends the selected code (plus a little related code it imports) to Anthropic, using your own API key, to write the review. .env and key files are never sent, and anything that looks like a secret inside code is masked first. Nothing else leaves your computer.
+> Gizmo sends the selected code (plus a little related code it imports) to Anthropic (or OpenAI, if that's the key you added), using your own API key, to write the review. .env and key files are never sent, and anything that looks like a secret inside code is masked first. Nothing else leaves your computer.
 
 **What leaves your computer, and where it goes**
 
 - Only the files you pick, or the files Gizmo matches to the screen, feature, or chip you choose (for "What I changed this week": your most recently changed source files, up to one scan's worth), plus a limited amount of code they import, go to the chosen company's API, and only when you run a scan, a question, or a spec comparison.
 - A whole-product scan also sends a local inventory of your project: file names, folder structure, and screen or component names. Never the source of files that aren't selected.
-- Requests go only to `api.anthropic.com` or `api.openai.com`, over your own API key. Gizmo ignores proxy or token environment variables, so nothing can quietly reroute it. If Anthropic's safety filter declines a request, it may retry on another Anthropic model; it never goes to a third party. OpenAI requests ask OpenAI not to store the answer (`store: false`).
+- Requests go only to `api.anthropic.com` or `api.openai.com`, over your own API key. Gizmo ignores proxy or token environment variables, so nothing can quietly reroute it. If Anthropic's safety filter declines a request, Anthropic may answer it with another Claude model within that same request. Gizmo doesn't send it again, and it never goes to a third party. OpenAI requests ask OpenAI not to store the answer (`store: false`).
 - Your use of the API is covered by [Anthropic's](https://www.anthropic.com/legal/privacy) or [OpenAI's](https://openai.com/policies/privacy-policy) terms and privacy policy, not by Gizmo.
 
 **What never leaves your computer**
@@ -125,7 +125,7 @@ Before the first analysis with each company it shows this notice (naming that co
 
 ## What's next
 
-Ideas on the list, in rough order: replies from your boss arriving straight from Slack or email, a custom voice for Gizmo, more languages beyond JavaScript and TypeScript, and more AI providers.
+Ideas on the list, built only if people ask for them: faster scans, more languages beyond JavaScript and TypeScript, more AI providers, replies from your boss arriving straight from Slack or email, and a custom voice for Gizmo.
 
 ## About
 

@@ -116,7 +116,7 @@ export async function runAnalysis(
     if (flowQuestion) context.flowQuestion = flowQuestion
     if (productInventory) context.productInventory = productInventory
 
-    showStep(3, estimateScanCostUsd(context.totalChars))
+    showStep(3, estimateScanCostUsd(context.totalChars, settings.provider))
     const { result: analysis, costUsd } = await services.provider.analyze(context)
 
     // The answer is already paid for, so a save during the scan only adds a note.

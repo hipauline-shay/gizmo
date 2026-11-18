@@ -1,4 +1,5 @@
 import type { ScanTarget, WebviewToExtensionMessage } from '../shared/messages'
+import { isProviderId, type ProviderId } from '../shared/ai-providers'
 import type { Evidence } from '../analysis/schemas'
 
 export interface MessageHandlers {
@@ -20,7 +21,7 @@ export interface MessageHandlers {
   onCopy(text: string): void
   onOpenEmail(subject: string, body: string): void
   onAddApiKey(): void
-  onOpenAnthropicConsole(): void
+  onOpenKeyPage(provider: ProviderId): void
 }
 
 export function routeMessage(message: unknown, handlers: MessageHandlers): void {
@@ -82,8 +83,8 @@ export function routeMessage(message: unknown, handlers: MessageHandlers): void 
     case 'addApiKey':
       handlers.onAddApiKey()
       return
-    case 'openAnthropicConsole':
-      handlers.onOpenAnthropicConsole()
+    case 'openKeyPage':
+      handlers.onOpenKeyPage(message.provider)
       return
   }
 }
@@ -106,6 +107,7 @@ function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
   if (record.type === 'refresh') return isOptionalString(record.areaId)
   if (record.type === 'openEvidence') return isEvidence(record.evidence)
   if (record.type === 'copy') return typeof record.text === 'string'
+  if (record.type === 'openKeyPage') return isProviderId(record.provider)
   if (record.type === 'openEmail')
     return typeof record.subject === 'string' && typeof record.body === 'string'
   return [
@@ -118,7 +120,6 @@ function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
     'retry',
     'scanProduct',
     'addApiKey',
-    'openAnthropicConsole',
   ].includes(record.type)
 }
 

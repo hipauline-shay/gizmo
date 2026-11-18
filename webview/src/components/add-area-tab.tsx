@@ -3,6 +3,7 @@ import { ErrorState } from './error-state'
 import { AreaPicker } from './area-picker'
 import { maxReportAreas } from '../../../src/utilities/limits'
 import type { AddAreaState } from '../types/panel'
+import type { ProviderId } from '../../../src/shared/ai-providers'
 
 interface AddAreaTabProps {
   addArea?: AddAreaState
@@ -10,6 +11,7 @@ interface AddAreaTabProps {
   estimateUsd?: number
   suggestions?: string[]
   canScanRecent: boolean
+  provider?: ProviderId
 }
 
 export const AddAreaTab = ({
@@ -18,6 +20,7 @@ export const AddAreaTab = ({
   estimateUsd,
   suggestions,
   canScanRecent,
+  provider,
 }: AddAreaTabProps) => {
   const remaining = maxReportAreas - areaCount
 
@@ -36,7 +39,12 @@ export const AddAreaTab = ({
         <strong>combines it into your current Summary</strong>. Small scans stay fast, cheap and
         reliable.
       </p>
-      <AreaPicker target="add" suggestions={suggestions} canScanRecent={canScanRecent} />
+      <AreaPicker
+        target="add"
+        suggestions={suggestions}
+        canScanRecent={canScanRecent}
+        provider={provider}
+      />
       <p className="add-area-count">
         {remaining === 1
           ? 'You can add 1 more area to this report.'

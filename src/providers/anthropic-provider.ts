@@ -1,20 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { AIProvider, Priced } from './ai-provider'
-import type { AnalysisContext, FollowUpAnswer } from '../analysis/types'
-import type { CombinedSummary, GapAnalysis, ProductAnalysis } from '../analysis/schemas'
-import {
-  analysisSystemPrompt,
-  buildAnalysisPrompt,
-  buildCombinedSummaryPrompt,
-  buildFollowUpPrompt,
-  buildSpecComparisonPrompt,
-  type PromptArea,
-} from '../analysis/prompt-builder'
-import {
-  parseAnalysisResponse,
-  parseCombinedSummaryResponse,
-  parseGapAnalysisResponse,
-} from '../analysis/response-parser'
+import { analysisSystemPrompt } from '../analysis/prompt-builder'
+import { PromptProvider, type Completion } from './prompt-provider'
 import { knownError, GizmoError } from '../utilities/errors'
 import type { Logger } from '../services/logger'
 import { estimateCostUsd } from './pricing'
@@ -30,38 +16,14 @@ export interface AnthropicProviderOptions {
 const maxOutputTokens = 64000
 const ANTHROPIC_API_URL = 'https://api.anthropic.com'
 
-export class AnthropicProvider implements AIProvider {
+export class AnthropicProvider extends PromptProvider {
   readonly name = 'anthropic'
 
-  constructor(private readonly options: AnthropicProviderOptions) {}
-
-  async analyze(context: AnalysisContext): Promise<Priced<ProductAnalysis>> {
-    const { text, costUsd } = await this.complete(buildAnalysisPrompt(context))
-    return { result: parseAnalysisResponse(text), costUsd }
+  constructor(private readonly options: AnthropicProviderOptions) {
+    super()
   }
 
-  async askFollowUp(areas: PromptArea[], question: string): Promise<FollowUpAnswer> {
-    const { text } = await this.complete(buildFollowUpPrompt({ areas, question }))
-    return { answer: text.trim() }
-  }
-
-  async summarizeAreas(
-    areas: Pick<PromptArea, 'label' | 'analysis'>[],
-  ): Promise<Priced<CombinedSummary>> {
-    const { text, costUsd } = await this.complete(buildCombinedSummaryPrompt(areas))
-    return { result: parseCombinedSummaryResponse(text), costUsd }
-  }
-
-  async compareToSpec(
-    context: AnalysisContext,
-    analysis: ProductAnalysis,
-    spec: string,
-  ): Promise<GapAnalysis> {
-    const { text } = await this.complete(buildSpecComparisonPrompt(context, analysis, spec))
-    return parseGapAnalysisResponse(text)
-  }
-
-  private async complete(userPrompt: string): Promise<{ text: string; costUsd?: number }> {
+  protected async complete(userPrompt: string): Promise<Completion> {
     const apiKey = await this.options.getApiKey()
     if (!apiKey) throw knownError('api-key-missing')
 

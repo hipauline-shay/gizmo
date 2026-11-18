@@ -1922,6 +1922,12 @@ textarea:focus-visible {
   gap: 6px;
 }
 
+.key-setup-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .key-setup-steps li::marker {
   color: var(--pt-brand-cream);
   font-weight: 600;

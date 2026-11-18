@@ -1,6 +1,7 @@
 import type { CombinedSummary, Evidence, GapAnalysis, ProductAnalysis } from '../analysis/schemas'
 import type { AnalysisMeta, ChatEntry } from '../analysis/types'
 import type { ErrorInfo } from '../utilities/errors'
+import type { ProviderId } from './ai-providers'
 
 export type PanelStatus = 'empty' | 'loading' | 'error' | 'ready'
 
@@ -50,6 +51,7 @@ export interface PanelState {
   mapStatus?: MapStatus
   cost?: { lastUsd: number; totalUsd: number }
   hasApiKey?: boolean
+  provider?: ProviderId
 }
 
 export type ExtensionToWebviewMessage = { type: 'state'; state: PanelState }
@@ -73,7 +75,7 @@ export type WebviewToExtensionMessage =
   | { type: 'copy'; text: string }
   | { type: 'openEmail'; subject: string; body: string }
   | { type: 'addApiKey' }
-  | { type: 'openAnthropicConsole' }
+  | { type: 'openKeyPage'; provider: ProviderId }
 
 export const emptyPanelState: PanelState = {
   status: 'empty',

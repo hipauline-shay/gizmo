@@ -61,6 +61,7 @@ export class GizmoPanel {
       mapStatus: state.mapStatus ?? this.state.mapStatus,
       cost: state.cost ?? this.state.cost,
       hasApiKey: state.hasApiKey ?? this.state.hasApiKey,
+      provider: state.provider ?? this.state.provider,
     }
     this.postState()
   }

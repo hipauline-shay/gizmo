@@ -58,13 +58,14 @@ const errorCatalog: Record<GizmoErrorCode, ErrorInfo> = {
   },
   'api-key-missing': {
     code: 'api-key-missing',
-    message: 'No Anthropic API key is configured.',
-    action: 'Run "Gizmo: Configure AI Provider" to add your key. It is stored securely.',
+    message: 'No API key is configured.',
+    action:
+      'Run "Gizmo: Configure AI Provider" to add your Anthropic or OpenAI key. It is stored securely.',
   },
   'auth-failed': {
     code: 'auth-failed',
     message: 'The AI provider rejected the API key.',
-    action: 'Run "Gizmo: Configure AI Provider" and enter a valid Anthropic API key.',
+    action: 'Run "Gizmo: Configure AI Provider" and enter a valid Anthropic or OpenAI API key.',
   },
   'rate-limited': {
     code: 'rate-limited',
@@ -101,18 +102,18 @@ const errorCatalog: Record<GizmoErrorCode, ErrorInfo> = {
   },
   'no-credit': {
     code: 'no-credit',
-    message: 'Your Anthropic account has no API credit left.',
+    message: 'Your AI account has no API credit left.',
     action:
-      'Add a little credit at console.anthropic.com (Billing), then try again. Gizmo runs on your own key.',
+      'Add a little credit at console.anthropic.com or platform.openai.com (Billing), then try again. Gizmo runs on your own key.',
   },
   busy: {
     code: 'busy',
-    message: 'Claude is busy right now.',
+    message: 'The AI is busy right now.',
     action: 'Wait a minute and try again.',
   },
   refused: {
     code: 'refused',
-    message: 'Claude declined to answer this request.',
+    message: 'The AI declined to answer this request.',
     action: 'Try a smaller selection or rephrase the question.',
   },
   unknown: {

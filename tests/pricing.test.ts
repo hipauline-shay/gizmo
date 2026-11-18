@@ -14,6 +14,11 @@ describe('estimateCostUsd', () => {
     expect(estimateCostUsd('claude-haiku-4-5', { inputTokens: 0, outputTokens: 1_000_000 })).toBe(5)
   })
 
+  it('prices OpenAI models from the same table', () => {
+    expect(estimateCostUsd('gpt-6.1-sol', { inputTokens: 1_000_000, outputTokens: 0 })).toBe(2)
+    expect(estimateCostUsd('gpt-6-astra', { inputTokens: 0, outputTokens: 1_000_000 })).toBe(50)
+  })
+
   it('returns undefined for unknown models instead of guessing', () => {
     expect(
       estimateCostUsd('some-future-model', { inputTokens: 10, outputTokens: 10 }),
@@ -39,9 +44,15 @@ describe('formatCostUsd', () => {
 })
 
 describe('estimateScanCostUsd', () => {
-  it('matches what a real full-size area scan cost (about $0.31 to $0.35)', () => {
-    const estimate = estimateScanCostUsd(60000)
+  it('matches what a real full-size Claude area scan cost (about $0.31 to $0.35)', () => {
+    const estimate = estimateScanCostUsd(60000, 'anthropic')
     expect(estimate).toBeGreaterThanOrEqual(0.31)
     expect(estimate).toBeLessThanOrEqual(0.36)
+  })
+
+  it('estimates OpenAI GPT-6.1 Sol at half the Claude price', () => {
+    expect(estimateScanCostUsd(60000, 'openai')).toBeCloseTo(
+      estimateScanCostUsd(60000, 'anthropic') / 2,
+    )
   })
 })

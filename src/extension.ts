@@ -1,5 +1,8 @@
 import * as vscode from 'vscode'
 import { AnthropicProvider } from './providers/anthropic-provider'
+import { OpenAIProvider } from './providers/openai-provider'
+import { createActiveProvider } from './providers/active-provider'
+import { providerInfo } from './shared/ai-providers'
 import { createSecretService } from './services/secret-service'
 import { createPrivacyConsentService } from './services/privacy-consent-service'
 import { createLogger } from './services/logger'
@@ -24,7 +27,11 @@ import { runScanRecent } from './commands/scan-recent'
 import { runAskAboutSelection } from './commands/ask-about-selection'
 import { runExportBrief } from './commands/export-brief'
 import { runExportTickets } from './commands/export-tickets'
-import { promptForApiKey, runConfigureProvider } from './commands/configure-provider'
+import {
+  promptForApiKey,
+  refreshKeyState,
+  runConfigureProvider,
+} from './commands/configure-provider'
 import { runOpenPanel } from './commands/open-panel'
 import { runClearAnalysis } from './commands/clear-analysis'
 import { runCompareSpec } from './commands/compare-spec'
@@ -35,19 +42,31 @@ export function activate(context: vscode.ExtensionContext): void {
   const mapService = createProjectMapService(context, logger)
 
   let sessionCostUsd = 0
+  const handleCost = (usd: number): void => {
+    sessionCostUsd += usd
+    GizmoPanel.instance?.update({ cost: { lastUsd: usd, totalUsd: sessionCostUsd } })
+  }
   const services: AppServices = {
     extensionUri: context.extensionUri,
     secretService,
     consentService: createPrivacyConsentService(context.globalState),
     logger,
-    provider: new AnthropicProvider({
-      getApiKey: () => secretService.getApiKey(),
-      getModel: () => readSettings().model,
-      logger,
-      onCost: (usd) => {
-        sessionCostUsd += usd
-        GizmoPanel.instance?.update({ cost: { lastUsd: usd, totalUsd: sessionCostUsd } })
+    provider: createActiveProvider({
+      providers: {
+        anthropic: new AnthropicProvider({
+          getApiKey: () => secretService.getApiKey('anthropic'),
+          getModel: () => readSettings().model,
+          logger,
+          onCost: handleCost,
+        }),
+        openai: new OpenAIProvider({
+          getApiKey: () => secretService.getApiKey('openai'),
+          getModel: () => readSettings().openaiModel,
+          logger,
+          onCost: handleCost,
+        }),
       },
+      getActive: () => readSettings().provider,
     }),
     mapService,
     getPanel: () => GizmoPanel.getOrCreate(context.extensionUri, panelHandlers),
@@ -68,9 +87,7 @@ export function activate(context: vscode.ExtensionContext): void {
         mapStatus: mapService.status(),
         areaSuggestions: areaSuggestionsFor(services),
       })
-      void services.secretService
-        .getApiKey()
-        .then((key) => panel.update({ hasApiKey: key !== undefined }))
+      void refreshKeyState(services)
     },
     onChooseFile: (target) => scan(() => runChooseFiles(services, target)),
     onRefresh: (areaId) => {
@@ -97,8 +114,8 @@ export function activate(context: vscode.ExtensionContext): void {
     onOpenEvidence: (evidence) => void openEvidence(services, evidence),
     onCopy: (text) => void vscode.env.clipboard.writeText(text),
     onAddApiKey: () => void promptForApiKey(services),
-    onOpenAnthropicConsole: () =>
-      void vscode.env.openExternal(vscode.Uri.parse('https://console.anthropic.com/settings/keys')),
+    onOpenKeyPage: (provider) =>
+      void vscode.env.openExternal(vscode.Uri.parse(providerInfo[provider].keyPageUrl)),
     onOpenEmail: (subject, body) => {
       const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
       // Uri.parse decodes %26 back to "&", which cut the email off at the first "&".
@@ -110,6 +127,10 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     logger,
     mapService,
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('gizmo.provider') && GizmoPanel.instance)
+        void refreshKeyState(services)
+    }),
     vscode.commands.registerCommand('gizmo.askProduct', () =>
       guardScan(services, () => runAskProduct(services)),
     ),

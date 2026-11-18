@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.12 — 2026-11-18
+
+- Works with OpenAI too. Add an Anthropic (Claude) or OpenAI API key and Gizmo tells which one it is. OpenAI uses GPT-6.1 Sol by default, about half the price of Claude Opus 5.5 (change it with the `gizmo.openaiModel` setting).
+- Switch between Anthropic and OpenAI, or remove a key, with "Gizmo: Configure AI Provider". Existing Claude keys keep working with no change.
+- The privacy notice names the company your code goes to, and asks again before the first scan with a new company.
+- Security update: Zod 4.6.7.
+
 ## 1.0.11 — 2026-10-17
 
 - Store listing now links to Gizmo's page on celestial-works.com. No changes to how Gizmo works.

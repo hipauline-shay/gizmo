@@ -18,7 +18,8 @@ describe('knownError', () => {
     }
   })
 
-  it('points a user with no credit to the Anthropic console', () => {
+  it('points a user with no credit to both billing pages', () => {
     expect(knownError('no-credit').action).toContain('console.anthropic.com')
+    expect(knownError('no-credit').action).toContain('platform.openai.com')
   })
 })

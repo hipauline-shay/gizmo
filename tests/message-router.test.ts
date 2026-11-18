@@ -21,7 +21,7 @@ function createHandlers(): MessageHandlers {
     onCopy: vi.fn(),
     onOpenEmail: vi.fn(),
     onAddApiKey: vi.fn(),
-    onOpenAnthropicConsole: vi.fn(),
+    onOpenKeyPage: vi.fn(),
   }
 }
 
@@ -51,9 +51,11 @@ describe('routeMessage', () => {
   it('routes the API key setup actions', () => {
     const handlers = createHandlers()
     routeMessage({ type: 'addApiKey' }, handlers)
-    routeMessage({ type: 'openAnthropicConsole' }, handlers)
+    routeMessage({ type: 'openKeyPage', provider: 'openai' }, handlers)
+    routeMessage({ type: 'openKeyPage', provider: 'somewhere-else' }, handlers)
     expect(handlers.onAddApiKey).toHaveBeenCalledOnce()
-    expect(handlers.onOpenAnthropicConsole).toHaveBeenCalledOnce()
+    expect(handlers.onOpenKeyPage).toHaveBeenCalledOnce()
+    expect(handlers.onOpenKeyPage).toHaveBeenCalledWith('openai')
   })
 
   it('routes ask messages with trimmed questions', () => {

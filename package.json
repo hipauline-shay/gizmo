@@ -2,7 +2,7 @@
   "name": "gizmo",
   "displayName": "Gizmo by Celestial Works",
   "description": "Gizmo checks what you built with AI, sums it up in plain words, and helps you share it with your team.",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "publisher": "celestialworks",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -20,6 +20,7 @@
   "keywords": [
     "ai",
     "claude",
+    "openai",
     "product",
     "product management",
     "design",
@@ -42,7 +43,7 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
-      "description": "Gizmo reads project files and sends selected code to Anthropic with your API key, so it only runs in workspaces you trust."
+      "description": "Gizmo reads project files and sends selected code to Anthropic or OpenAI with your API key, so it only runs in workspaces you trust."
     },
     "virtualWorkspaces": {
       "supported": false,
@@ -119,10 +120,28 @@
     "configuration": {
       "title": "Gizmo",
       "properties": {
+        "gizmo.provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai"
+          ],
+          "enumDescriptions": [
+            "Claude, using your Anthropic API key.",
+            "OpenAI, using your OpenAI API key."
+          ],
+          "default": "anthropic",
+          "description": "Which AI reads your code. Gizmo switches this for you when you add a key."
+        },
         "gizmo.model": {
           "type": "string",
           "default": "claude-opus-5-5",
-          "description": "Claude model used for analysis."
+          "description": "Claude model used when the provider is Anthropic."
+        },
+        "gizmo.openaiModel": {
+          "type": "string",
+          "default": "gpt-6.1-sol",
+          "description": "OpenAI model used when the provider is OpenAI. gpt-6-astra is stronger but costs about five times as much."
         },
         "gizmo.maxFiles": {
           "type": "number",
@@ -172,7 +191,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.115.0",
-    "zod": "4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

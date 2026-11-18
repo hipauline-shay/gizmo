@@ -198,6 +198,7 @@ export const App = () => {
     <EmptyState
       mapStatus={state.mapStatus}
       hasApiKey={state.hasApiKey}
+      provider={state.provider}
       areaSuggestions={state.areaSuggestions}
     />
   )
@@ -411,6 +412,7 @@ export const App = () => {
             estimateUsd={state.estimateUsd}
             suggestions={state.areaSuggestions}
             canScanRecent={!areas.some((area) => area.source === 'recent')}
+            provider={state.provider}
           />
         )}
 

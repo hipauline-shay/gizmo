@@ -3,16 +3,23 @@ import { postMessage } from '../hooks/use-vscode'
 import { estimateScanCostUsd, formatCostUsd } from '../../../src/shared/format-cost'
 import { defaultLimits } from '../../../src/utilities/limits'
 import type { ScanTarget } from '../types/panel'
+import type { ProviderId } from '../../../src/shared/ai-providers'
 
 interface AreaPickerProps {
   target: ScanTarget
   suggestions?: string[]
   // Hidden once the report already has a "What I changed this week" area.
   canScanRecent?: boolean
+  provider?: ProviderId
 }
 
 // Type a screen or feature, or tap a chip, and Gizmo scans it straight away.
-export const AreaPicker = ({ target, suggestions = [], canScanRecent = true }: AreaPickerProps) => {
+export const AreaPicker = ({
+  target,
+  suggestions = [],
+  canScanRecent = true,
+  provider = 'anthropic',
+}: AreaPickerProps) => {
   const [question, setQuestion] = useState('')
   const [isSending, setIsSending] = useState(false)
 
@@ -82,8 +89,8 @@ export const AreaPicker = ({ target, suggestions = [], canScanRecent = true }: A
         ))}
       </div>
       <p className="area-picker-cost">
-        Each area costs {formatCostUsd(estimateScanCostUsd(defaultLimits.maxTotalChars))} or less on
-        your own key.{' '}
+        Each area costs {formatCostUsd(estimateScanCostUsd(defaultLimits.maxTotalChars, provider))}{' '}
+        or less on your own key.{' '}
         <button
           type="button"
           className="details-link"

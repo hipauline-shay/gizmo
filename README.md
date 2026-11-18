@@ -43,10 +43,10 @@ Every claim is marked Confirmed (visible in the code), Likely (a reasonable infe
 ## Getting started (about 2 minutes)
 
 1. Install Gizmo from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=celestialworks.gizmo) (or [Open VSX](https://open-vsx.org/extension/celestialworks/gizmo) for Cursor), then open a JavaScript or TypeScript project (React, Next.js, React Native, Node).
-2. Open the panel (Command Palette → **Gizmo: Open Panel**). Gizmo walks you through adding an Anthropic API key: create one at [console.anthropic.com](https://console.anthropic.com/settings/keys), add a little credit, paste it in. The key stays on your computer.
+2. Open the panel (Command Palette → **Gizmo: Open Panel**). Gizmo walks you through adding an API key from Anthropic (Claude) or OpenAI: create one at [console.anthropic.com](https://console.anthropic.com/settings/keys) or [platform.openai.com](https://platform.openai.com/api-keys), add a little credit, paste it in. Gizmo tells which company the key is from, and the key stays on your computer.
 3. Ask about a screen or feature, or right-click a file or folder → **Gizmo: Explain as Product**. To add another area later, use **+ Add area** in the panel or right-click → **Gizmo: Add to Report**.
 
-Gizmo is free. Each scan or question uses your own Anthropic credit: usually well under a dollar per area and cents per question. Gizmo shows the estimated cost before a scan and the actual cost after it, and never retries on its own.
+Gizmo is free. Each scan or question uses your own Anthropic or OpenAI credit: usually well under a dollar per area and cents per question. Gizmo shows the estimated cost before a scan and the actual cost after it, and never retries on its own.
 
 ## Good to know
 
@@ -58,22 +58,22 @@ Gizmo is free. Each scan or question uses your own Anthropic credit: usually wel
 
 Gizmo runs entirely inside your editor. There is no Gizmo server, no account, no sign-up, and no analytics.
 
-The short version: **everything Gizmo analyzes goes to Anthropic (the makers of Claude) and nowhere else, using your own API key.** If you'd rather not send code to Anthropic, Gizmo isn't for you, and that's fine.
+The short version: **everything Gizmo analyzes goes to the AI company whose key you added, Anthropic (the makers of Claude) or OpenAI, and nowhere else.** If you'd rather not send code to either, Gizmo isn't for you, and that's fine.
 
-Before the first analysis it shows this notice and asks you to confirm:
+Before the first analysis with each company it shows this notice (naming that company) and asks you to confirm:
 
 > Gizmo sends the selected code (plus a little related code it imports) to Anthropic, using your own API key, to write the review. .env and key files are never sent, and anything that looks like a secret inside code is masked first. Nothing else leaves your computer.
 
 **What leaves your computer, and where it goes**
 
-- Only the files you pick, or the files Gizmo matches to the screen, feature, or chip you choose (for "What I changed this week": your most recently changed source files, up to one scan's worth), plus a limited amount of code they import, go to Anthropic's API, and only when you run a scan, a question, or a spec comparison.
+- Only the files you pick, or the files Gizmo matches to the screen, feature, or chip you choose (for "What I changed this week": your most recently changed source files, up to one scan's worth), plus a limited amount of code they import, go to the chosen company's API, and only when you run a scan, a question, or a spec comparison.
 - A whole-product scan also sends a local inventory of your project: file names, folder structure, and screen or component names. Never the source of files that aren't selected.
-- Requests go only to `api.anthropic.com`, over your own API key. Gizmo ignores proxy or token environment variables, so nothing can quietly reroute it. If Anthropic's safety filter declines a request, it may retry on another Anthropic model; it never goes to a third party.
-- Your use of the API is covered by [Anthropic's terms and privacy policy](https://www.anthropic.com/legal/privacy), not by Gizmo.
+- Requests go only to `api.anthropic.com` or `api.openai.com`, over your own API key. Gizmo ignores proxy or token environment variables, so nothing can quietly reroute it. If Anthropic's safety filter declines a request, it may retry on another Anthropic model; it never goes to a third party. OpenAI requests ask OpenAI not to store the answer (`store: false`).
+- Your use of the API is covered by [Anthropic's](https://www.anthropic.com/legal/privacy) or [OpenAI's](https://openai.com/policies/privacy-policy) terms and privacy policy, not by Gizmo.
 
 **What never leaves your computer**
 
-- Your API key. It lives in VS Code's Secret Storage (your OS keychain), never in settings, files, or logs.
+- Your API keys. They live in VS Code's Secret Storage (your OS keychain), never in settings, files, or logs.
 - `.env*` files, key or certificate files, anything named like `credentials` or `secret`, `node_modules`, build output, binaries, and anything in your `.gitignore`.
 - Strings inside code that look like keys are replaced with `[REDACTED]` before sending: known formats (Anthropic, OpenAI, Stripe, AWS, Google, GitHub, Slack, JWTs, private key blocks), quoted `apiKey:`/`secret:`/`password:` values, and any long random-looking string in quotes, whatever its format. The panel shows how many strings were masked after each scan.
 - The project map, your open items, and chat history. They stay in VS Code's local storage for this workspace.
@@ -84,7 +84,7 @@ Before the first analysis it shows this notice and asks you to confirm:
 - Gizmo only runs in trusted workspaces (it stays off in VS Code's Restricted Mode).
 - Export brief and Export tickets write a file only where you choose in the save dialog.
 - Gizmo treats everything in your code as data, not instructions. A comment that tries to steer the review is ignored and flagged as a risk.
-- Gizmo is an independent project by Celestial Works and is not affiliated with or endorsed by Anthropic. Claude is a trademark of Anthropic, PBC. Provided as-is under the MIT License, without warranty.
+- Gizmo is an independent project by Celestial Works and is not affiliated with or endorsed by Anthropic or OpenAI. Claude is a trademark of Anthropic, PBC. OpenAI is a trademark of OpenAI. Provided as-is under the MIT License, without warranty.
 
 ## Commands
 
@@ -97,33 +97,35 @@ Before the first analysis it shows this notice and asks you to confirm:
 - **Gizmo: Compare to Spec**
 - **Gizmo: Export Product Brief** and **Gizmo: Export Jira-Ready Tickets** — Markdown files, saved where you choose
 - **Gizmo: Refresh Project Map** — rebuild the local file map
-- **Gizmo: Configure AI Provider** — add, replace, or remove your API key
+- **Gizmo: Configure AI Provider** — add, replace, or remove a key, or switch between Anthropic and OpenAI
 - **Gizmo: Clear Current Analysis**
 
 ## Settings
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `gizmo.model` | `claude-opus-5-5` | Claude model used for analysis |
-| `gizmo.maxFiles` | `12` | Max files per analysis |
-| `gizmo.maxContextSize` | `160000` | Max total characters sent |
+| `gizmo.provider` | `anthropic` | Which AI reads your code: `anthropic` or `openai`. Set for you when you add a key |
+| `gizmo.model` | `claude-opus-5-5` | Claude model used with Anthropic |
+| `gizmo.openaiModel` | `gpt-6.1-sol` | OpenAI model used with OpenAI (`gpt-6-astra` is stronger, about five times the price) |
+| `gizmo.maxFiles` | `6` | Max files per scan (one area) |
+| `gizmo.maxContextSize` | `60000` | Max characters of code per scan (one area) |
 | `gizmo.includeRelatedImports` | `true` | Follow local imports of the selected file |
 | `gizmo.importDepth` | `1` | How many import levels to follow |
 | `gizmo.showPrivacyDisclosure` | `true` | Show the privacy disclosure before the first analysis |
 
 ## Troubleshooting
 
-- **"No Anthropic API key is configured"** — click **Add my key** in the panel, or run *Gizmo: Configure AI Provider*.
+- **"No API key is configured"** — click **Add my key** in the panel, or run *Gizmo: Configure AI Provider*.
 - **"The AI provider rejected the API key"** — the key is invalid or revoked; create a new one and add it again.
-- **"Your Anthropic account has no API credit left"** — add credit under Billing at console.anthropic.com, then try again.
-- **"Claude is busy right now"** — wait a minute and try again.
+- **"Your AI account has no API credit left"** — add credit under Billing at console.anthropic.com or platform.openai.com, then try again.
+- **"The AI is busy right now"** — wait a minute and try again.
 - **"This file type is not supported yet"** — pick a `.ts/.tsx/.js/.jsx` file, or a folder containing them.
 - **"The selection is too large"** — pick a smaller folder, or raise `gizmo.maxContextSize`.
 - **The panel is blank** — check the Gizmo output channel (View → Output → Gizmo).
 
 ## What's next
 
-Ideas on the list, in rough order: replies from your boss arriving straight from Slack or email, a custom voice for Gizmo, more languages beyond JavaScript and TypeScript, and other AI providers.
+Ideas on the list, in rough order: replies from your boss arriving straight from Slack or email, a custom voice for Gizmo, more languages beyond JavaScript and TypeScript, and more AI providers.
 
 ## About
 
